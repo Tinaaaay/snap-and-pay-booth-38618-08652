@@ -33,16 +33,9 @@ Both buttons work properly, allowing users to save or print their photos directl
 
 All improvements and features were added within the existing KodaSnap system — no new system was created.
 
-👨‍💻 Developers
+👨‍💻 Developer
 
-(Replace with your developer team’s names — remove your own name if needed)
-
-[Developer Name 1]
-
-[Developer Name 2]
-
-[Developer Name 3]
-
+Quintela, Kristine Joy Nisurtado
 📱 Responsiveness
 
 KodaSnap automatically adjusts based on the user’s device screen size, maintaining proper alignment, proportions, and visibility across all platforms.
