@@ -11,50 +11,50 @@ const Home = () => {
   const [showContact, setShowContact] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gradient-soft flex flex-col items-center justify-center p-8 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-soft flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
       {/* Top Navigation */}
-      <div className="absolute top-6 right-6 flex gap-3">
-        <Button variant="outline" onClick={() => setShowAbout(true)} className="bg-white/80 backdrop-blur-sm">
+      <div className="absolute top-4 sm:top-6 right-4 sm:right-6 flex gap-2 sm:gap-3 flex-wrap justify-end">
+        <Button variant="outline" onClick={() => setShowAbout(true)} className="bg-white/80 backdrop-blur-sm text-xs sm:text-sm">
           About
         </Button>
-        <Button variant="outline" onClick={() => setShowPrivacy(true)} className="bg-white/80 backdrop-blur-sm">
-          Privacy Policy
+        <Button variant="outline" onClick={() => setShowPrivacy(true)} className="bg-white/80 backdrop-blur-sm text-xs sm:text-sm">
+          Privacy
         </Button>
-        <Button variant="outline" onClick={() => setShowContact(true)} className="bg-white/80 backdrop-blur-sm">
-          Contact Us
+        <Button variant="outline" onClick={() => setShowContact(true)} className="bg-white/80 backdrop-blur-sm text-xs sm:text-sm">
+          Contact
         </Button>
       </div>
 
       {/* Decorative elements */}
-      <div className="absolute top-10 left-10 opacity-20">
-        <Sparkles className="w-12 h-12 text-primary animate-pulse" />
+      <div className="absolute top-10 left-4 sm:left-10 opacity-20">
+        <Sparkles className="w-8 h-8 sm:w-12 sm:h-12 text-primary animate-pulse" />
       </div>
-      <div className="absolute bottom-10 right-10 opacity-20">
-        <Heart className="w-16 h-16 text-primary animate-pulse" />
+      <div className="absolute bottom-10 right-4 sm:right-10 opacity-20">
+        <Heart className="w-12 h-12 sm:w-16 sm:h-16 text-primary animate-pulse" />
       </div>
       
       {/* Main content */}
-      <div className="text-center space-y-8 max-w-4xl">
+      <div className="text-center space-y-6 sm:space-y-8 max-w-4xl">
         {/* Brand badge */}
-        <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-6 py-3 rounded-full shadow-soft">
-          <Sparkles className="w-5 h-5 text-primary" />
-          <span className="text-sm font-medium text-foreground">
+        <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 sm:px-6 py-2 sm:py-3 rounded-full shadow-soft">
+          <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+          <span className="text-xs sm:text-sm font-medium text-foreground">
             Capture the moment, cherish the magic
           </span>
         </div>
 
         {/* Logo and title */}
-        <div className="space-y-4">
-          <h1 className="text-7xl md:text-8xl font-bold text-foreground tracking-tight">
+        <div className="space-y-3 sm:space-y-4">
+          <h1 className="text-5xl sm:text-7xl md:text-8xl font-bold text-foreground tracking-tight">
             KodaSnap
           </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-base sm:text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto px-4">
             Create beautiful photo strips instantly with our professional digital photobooth experience
           </p>
         </div>
 
         {/* Features */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 sm:mt-12 px-4">
           <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-soft">
             <Camera className="w-8 h-8 text-primary mx-auto mb-3" />
             <h3 className="font-semibold text-foreground mb-2">Instant Capture</h3>
@@ -79,19 +79,19 @@ const Home = () => {
         </div>
 
         {/* CTA Button */}
-        <div className="mt-12">
+        <div className="mt-8 sm:mt-12 px-4">
           <Button
             size="lg"
             onClick={() => navigate("/payment")}
-            className="text-2xl py-8 px-16 rounded-full shadow-glow hover:shadow-soft transition-all duration-300 hover:scale-105"
+            className="text-lg sm:text-2xl py-6 sm:py-8 px-12 sm:px-16 rounded-full shadow-glow hover:shadow-soft transition-all duration-300 hover:scale-105"
           >
-            <Camera className="w-8 h-8 mr-3" />
+            <Camera className="w-6 h-6 sm:w-8 sm:h-8 mr-2 sm:mr-3" />
             START
           </Button>
         </div>
 
         {/* Footer text */}
-        <p className="text-sm text-muted-foreground mt-8">
+        <p className="text-xs sm:text-sm text-muted-foreground mt-6 sm:mt-8">
           EST 2025 • Relive the love
         </p>
       </div>

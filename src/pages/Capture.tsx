@@ -124,7 +124,7 @@ const Capture = () => {
   return (
     <div className="min-h-screen bg-gradient-soft flex flex-col">
       {/* Header */}
-      <div className="p-6 flex items-center justify-between">
+      <div className="p-4 sm:p-6 flex items-center justify-between">
         <Button
           variant="ghost"
           onClick={() => {
@@ -134,23 +134,23 @@ const Capture = () => {
           className="gap-2"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back
+          <span className="hidden sm:inline">Back</span>
         </Button>
-        <h1 className="text-2xl font-bold text-foreground">KodaSnap</h1>
-        <div className="w-20" />
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">KodaSnap</h1>
+        <div className="w-16 sm:w-20" />
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex items-center justify-center p-4 gap-8">
+      <div className="flex-1 flex flex-col lg:flex-row items-center justify-center p-4 gap-4 lg:gap-8">
         {/* Camera feed */}
-        <div className="relative">
-          <div className="relative rounded-3xl overflow-hidden shadow-soft bg-black">
+        <div className="relative w-full lg:w-auto">
+          <div className="relative rounded-3xl overflow-hidden shadow-soft bg-black max-w-2xl mx-auto">
             <video
               ref={videoRef}
               autoPlay
               playsInline
               muted
-              className={`w-full max-w-2xl ${getFilterClass()}`}
+              className={`w-full ${getFilterClass()}`}
             />
             
             {/* Countdown overlay */}
@@ -172,11 +172,11 @@ const Capture = () => {
 
           {/* Start capture button */}
           {!isCapturing && capturedPhotos.length === 0 && (
-            <div className="mt-6 text-center">
+            <div className="mt-4 sm:mt-6 text-center">
               <Button
                 size="lg"
                 onClick={startCaptureSequence}
-                className="px-12 py-6 rounded-full shadow-glow hover:shadow-soft transition-all"
+                className="px-8 sm:px-12 py-5 sm:py-6 rounded-full shadow-glow hover:shadow-soft transition-all"
               >
                 Start Capture
               </Button>
@@ -185,15 +185,15 @@ const Capture = () => {
         </div>
 
         {/* Photo preview sidebar */}
-        <div className="space-y-4">
+        <div className="space-y-4 w-full lg:w-auto">
           <h3 className="font-semibold text-foreground text-center">
             {capturedPhotos.length > 0 ? "Captured Photos" : "Waiting for capture"}
           </h3>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-row lg:flex-col gap-3 justify-center flex-wrap">
             {[...Array(photoCount)].map((_, i) => (
               <div
                 key={i}
-                className="w-32 h-32 rounded-xl bg-white/60 backdrop-blur-sm shadow-soft overflow-hidden"
+                className="w-24 h-24 sm:w-32 sm:h-32 rounded-xl bg-white/60 backdrop-blur-sm shadow-soft overflow-hidden"
               >
                 {capturedPhotos[i] ? (
                   <img
@@ -213,8 +213,8 @@ const Capture = () => {
       </div>
 
       {/* Filter selection */}
-      <div className="p-6 bg-white/60 backdrop-blur-sm">
-        <p className="text-center font-medium text-foreground mb-3">
+      <div className="p-4 sm:p-6 bg-white/60 backdrop-blur-sm">
+        <p className="text-center font-medium text-foreground mb-3 text-sm sm:text-base">
           Choose a filter for your photos!
         </p>
         <div className="flex gap-2 justify-center flex-wrap">

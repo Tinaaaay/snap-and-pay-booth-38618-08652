@@ -18,6 +18,7 @@ const CustomizeNew = () => {
   const [stickerTheme, setStickerTheme] = useState("No Sticker");
   const [addDate, setAddDate] = useState(false);
   const [addTime, setAddTime] = useState(false);
+  const [timestampColor, setTimestampColor] = useState("#FFFFFF");
   const [customText, setCustomText] = useState("");
   const [textColor, setTextColor] = useState("#FFFFFF");
   const [textFont, setTextFont] = useState("sans-serif");
@@ -26,13 +27,35 @@ const CustomizeNew = () => {
   const [isDraggingText, setIsDraggingText] = useState(false);
   
   const stickers = ["💖", "✨", "🎀", "⭐", "🌸"];
-  const [stickerPositions, setStickerPositions] = useState([
-    { x: 10, y: 10 },
-    { x: 85, y: 15 },
-    { x: 5, y: 85 },
-    { x: 90, y: 80 },
-    { x: 50, y: 5 }
-  ]);
+  
+  // Generate random sticker positions around edges (not covering center)
+  const generateRandomStickerPositions = () => {
+    const positions = [];
+    for (let i = 0; i < 5; i++) {
+      // Randomly choose edge: 0=top, 1=right, 2=bottom, 3=left
+      const edge = Math.floor(Math.random() * 4);
+      let x, y;
+      
+      if (edge === 0) { // Top edge
+        x = Math.random() * 80 + 10; // 10-90%
+        y = Math.random() * 15; // 0-15%
+      } else if (edge === 1) { // Right edge
+        x = 85 + Math.random() * 10; // 85-95%
+        y = Math.random() * 80 + 10; // 10-90%
+      } else if (edge === 2) { // Bottom edge
+        x = Math.random() * 80 + 10; // 10-90%
+        y = 85 + Math.random() * 10; // 85-95%
+      } else { // Left edge
+        x = Math.random() * 10; // 0-10%
+        y = Math.random() * 80 + 10; // 10-90%
+      }
+      
+      positions.push({ x, y });
+    }
+    return positions;
+  };
+  
+  const [stickerPositions, setStickerPositions] = useState(generateRandomStickerPositions());
 
   const frameColors = [
     { name: "White", value: "#FFFFFF" },
@@ -74,6 +97,7 @@ const CustomizeNew = () => {
           stickerTheme,
           addDate,
           addTime,
+          timestampColor,
           customText,
           textColor,
           textFont,
@@ -127,17 +151,17 @@ const CustomizeNew = () => {
   return (
     <div className="min-h-screen bg-gradient-soft flex flex-col">
       {/* Header */}
-      <div className="p-6 flex items-center justify-between">
+      <div className="p-4 sm:p-6 flex items-center justify-between">
         <Button
           variant="ghost"
           onClick={() => navigate("/capture")}
           className="gap-2"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back
+          <span className="hidden sm:inline">Back</span>
         </Button>
-        <h1 className="text-2xl font-bold text-foreground">KodaSnap</h1>
-        <div className="w-20" />
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">KodaSnap</h1>
+        <div className="w-16 sm:w-20" />
       </div>
 
       {/* Main content */}
@@ -179,26 +203,15 @@ const CustomizeNew = () => {
                             layout === "vertical" ? "h-40" : "h-32"
                           }`}
                         />
-                        {stickerTheme !== "No Sticker" && (
-                          <div className="absolute top-2 right-2 text-2xl bg-white/80 rounded-full p-1">
-                            {stickerTheme === "Girly Pop" && "💖"}
-                            {stickerTheme === "Cute" && "🎀"}
-                            {stickerTheme === "Mofusand" && "🐱"}
-                            {stickerTheme === "Shin Chan" && "⭐"}
-                            {stickerTheme === "Miffy" && "🐰"}
-                            {stickerTheme === "Mark's Solo" && "🎸"}
-                            {stickerTheme === "Midnight Garden" && "🌙"}
-                          </div>
-                        )}
                       </div>
                     ))}
                   </div>
                   
-                  {/* Decorative stickers around edges */}
-                  {stickers.map((sticker, index) => (
+                  {/* Decorative stickers around edges - only show if sticker theme selected */}
+                  {stickerTheme !== "No Sticker" && stickers.map((sticker, index) => (
                     <div
                       key={index}
-                      className="absolute text-3xl cursor-move select-none"
+                      className="absolute text-2xl sm:text-3xl cursor-move select-none"
                       style={{
                         left: `${stickerPositions[index].x}%`,
                         top: `${stickerPositions[index].y}%`,
@@ -206,7 +219,13 @@ const CustomizeNew = () => {
                       onMouseDown={(e) => e.preventDefault()}
                       onMouseMove={(e) => handleStickerDrag(index, e)}
                     >
-                      {sticker}
+                      {stickerTheme === "Girly Pop" && "💖"}
+                      {stickerTheme === "Cute" && "🎀"}
+                      {stickerTheme === "Mofusand" && "🐱"}
+                      {stickerTheme === "Shin Chan" && "⭐"}
+                      {stickerTheme === "Miffy" && "🐰"}
+                      {stickerTheme === "Mark's Solo" && "🎸"}
+                      {stickerTheme === "Midnight Garden" && "🌙"}
                     </div>
                   ))}
                   
@@ -232,12 +251,12 @@ const CustomizeNew = () => {
                   {/* Bottom date/time */}
                   <div className="mt-4 text-center space-y-1">
                     {addDate && (
-                      <p className="text-white text-sm drop-shadow-lg">
+                      <p className="text-sm drop-shadow-lg font-medium" style={{ color: timestampColor }}>
                         {getCurrentDate()}
                       </p>
                     )}
                     {addTime && (
-                      <p className="text-white text-sm drop-shadow-lg">
+                      <p className="text-sm drop-shadow-lg font-medium" style={{ color: timestampColor }}>
                         {getCurrentTime()}
                       </p>
                     )}
@@ -328,7 +347,13 @@ const CustomizeNew = () => {
                     <Button
                       key={theme}
                       variant={stickerTheme === theme ? "default" : "outline"}
-                      onClick={() => setStickerTheme(theme)}
+                      onClick={() => {
+                        setStickerTheme(theme);
+                        // Regenerate random positions when selecting a new sticker theme
+                        if (theme !== "No Sticker") {
+                          setStickerPositions(generateRandomStickerPositions());
+                        }
+                      }}
                       className="h-auto py-3"
                     >
                       {theme}
@@ -405,8 +430,8 @@ const CustomizeNew = () => {
 
               {/* Date & Time */}
               <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6">
-                <h3 className="font-semibold text-foreground mb-4">Options</h3>
-                <div className="space-y-3">
+                <h3 className="font-semibold text-foreground mb-4">Date & Time</h3>
+                <div className="space-y-4">
                   <div className="flex items-center space-x-3">
                     <Checkbox
                       id="add-date"
@@ -433,6 +458,21 @@ const CustomizeNew = () => {
                       Add Time
                     </label>
                   </div>
+                  
+                  {(addDate || addTime) && (
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Timestamp Color</label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="color"
+                          value={timestampColor}
+                          onChange={(e) => setTimestampColor(e.target.value)}
+                          className="w-20 h-10 cursor-pointer"
+                        />
+                        <span className="text-sm">{timestampColor}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

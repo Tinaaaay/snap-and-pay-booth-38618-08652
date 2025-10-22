@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { QrCode, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import gcashQR from "@/assets/gcash-qr.jpg";
 
 const Payment = () => {
   const navigate = useNavigate();
@@ -19,22 +20,22 @@ const Payment = () => {
   return (
     <div className="min-h-screen bg-gradient-soft flex flex-col">
       {/* Header */}
-      <div className="p-6 flex items-center justify-between">
+      <div className="p-4 sm:p-6 flex items-center justify-between">
         <Button
           variant="ghost"
           onClick={() => navigate("/")}
           className="gap-2"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back
+          <span className="hidden sm:inline">Back</span>
         </Button>
-        <h1 className="text-2xl font-bold text-foreground">KodaSnap</h1>
-        <div className="w-20" />
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">KodaSnap</h1>
+        <div className="w-16 sm:w-20" />
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="max-w-md w-full space-y-8">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
+        <div className="max-w-md w-full space-y-6 sm:space-y-8">
           <div className="text-center space-y-4">
             <div className="inline-flex items-center justify-center w-20 h-20 bg-primary/10 rounded-full">
               <QrCode className="w-10 h-10 text-primary" />
@@ -47,17 +48,16 @@ const Payment = () => {
             </p>
           </div>
 
-          {/* QR Code placeholder */}
-          <div className="bg-white rounded-3xl p-8 shadow-soft">
-            <div className="aspect-square bg-muted rounded-2xl flex items-center justify-center">
-              <div className="text-center space-y-4">
-                <QrCode className="w-32 h-32 text-muted-foreground mx-auto" />
-                <p className="text-sm text-muted-foreground">
-                  GCash QR Code
-                </p>
-                <p className="font-bold text-2xl text-foreground">₱50.00</p>
-              </div>
+          {/* GCash QR Code */}
+          <div className="bg-white rounded-3xl p-4 sm:p-8 shadow-soft">
+            <div className="aspect-square rounded-2xl overflow-hidden flex items-center justify-center">
+              <img 
+                src={gcashQR} 
+                alt="GCash QR Code" 
+                className="w-full h-full object-contain"
+              />
             </div>
+            <p className="text-center font-bold text-xl sm:text-2xl text-foreground mt-4">₱50.00</p>
           </div>
 
           {/* Payment instructions */}
