@@ -1,73 +1,56 @@
-# Welcome to your Lovable project
+🖼️ KodaSnap System
 
-## Project info
+KodaSnap is an interactive photo system that allows users to take pictures, add stickers, and generate a downloadable or printable final output. The system ensures accurate preview-to-final rendering, responsive layout, and smooth user experience across all devices.
 
-**URL**: https://lovable.dev/projects/bd64a821-1d7a-4092-b9c7-b7d70bad9b55
+🚀 Features
 
-## How can I edit this code?
+Responsive Design:
+Automatically adjusts layout and elements for phones, tablets, and laptops. Ensures all content is visible on smaller screens with no overlapping or hidden parts.
 
-There are several ways of editing your application.
+Accurate Preview:
+The photo in the final output appears exactly as it does during capture — no stretching or distortion.
 
-**Use Lovable**
+Sticker Controls:
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/bd64a821-1d7a-4092-b9c7-b7d70bad9b55) and start prompting.
+Stickers only appear after the user selects a design.
 
-Changes made via Lovable will be committed automatically to this repo.
+Five stickers are automatically placed around the image edges, randomly positioned but never covering the face or main photo area.
 
-**Use your preferred IDE**
+Stickers cannot go beyond the frame and are easy to control.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Users can select “No Sticker” to remove all stickers.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Timestamp Customization:
+Users can change the timestamp color to ensure visibility regardless of background color.
 
-Follow these steps:
+GCash Payment Integration:
+Includes a GCash QR code (visible and properly positioned) for easy scanning and payment on the payment page.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Download & Print Functionality:
+Both buttons work properly, allowing users to save or print their photos directly.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+🧩 System Updates
 
-# Step 3: Install the necessary dependencies.
-npm i
+All improvements and features were added within the existing KodaSnap system — no new system was created.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+👨‍💻 Developers
 
-**Edit a file directly in GitHub**
+(Replace with your developer team’s names — remove your own name if needed)
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+[Developer Name 1]
 
-**Use GitHub Codespaces**
+[Developer Name 2]
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+[Developer Name 3]
 
-## What technologies are used for this project?
+📱 Responsiveness
 
-This project is built with:
+KodaSnap automatically adjusts based on the user’s device screen size, maintaining proper alignment, proportions, and visibility across all platforms.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+📝 Notes
 
-## How can I deploy this project?
+Ensure all stickers, images, and timestamps remain within the frame boundaries.
 
-Simply open [Lovable](https://lovable.dev/projects/bd64a821-1d7a-4092-b9c7-b7d70bad9b55) and click on Share -> Publish.
+Verify that the GCash QR code is visible and scannable.
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Regularly test on mobile devices for layout accuracy.
