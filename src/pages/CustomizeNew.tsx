@@ -120,15 +120,31 @@ const CustomizeNew = () => {
     }
   };
 
-  const handleStickerDrag = (index: number, e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.parentElement?.getBoundingClientRect();
+  const [draggingStickerIndex, setDraggingStickerIndex] = useState<number | null>(null);
+
+  const handleStickerMouseDown = (index: number) => {
+    setDraggingStickerIndex(index);
+  };
+
+  const handleStickerDrag = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (draggingStickerIndex === null) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
     if (rect) {
       const x = ((e.clientX - rect.left) / rect.width) * 100;
       const y = ((e.clientY - rect.top) / rect.height) * 100;
       const newPositions = [...stickerPositions];
-      newPositions[index] = { x: Math.max(0, Math.min(90, x)), y: Math.max(0, Math.min(90, y)) };
+      // Keep stickers within bounds (2% to 95% to prevent cutoff)
+      newPositions[draggingStickerIndex] = { 
+        x: Math.max(2, Math.min(95, x)), 
+        y: Math.max(2, Math.min(95, y)) 
+      };
       setStickerPositions(newPositions);
     }
+  };
+
+  const handleStickerMouseUp = () => {
+    setDraggingStickerIndex(null);
   };
 
   const getCurrentDate = () => {
@@ -179,10 +195,20 @@ const CustomizeNew = () => {
               </h3>
               <div className="flex justify-center">
                 <div
-                  className={`rounded-3xl p-6 shadow-soft max-w-md w-full relative`}
+                  className={`rounded-3xl p-6 shadow-soft max-w-md w-full relative select-none`}
                   style={{ backgroundColor: frameColor }}
-                  onMouseMove={handleTextDrag}
-                  onMouseUp={() => setIsDraggingText(false)}
+                  onMouseMove={(e) => {
+                    handleTextDrag(e);
+                    handleStickerDrag(e);
+                  }}
+                  onMouseUp={() => {
+                    setIsDraggingText(false);
+                    handleStickerMouseUp();
+                  }}
+                  onMouseLeave={() => {
+                    setIsDraggingText(false);
+                    handleStickerMouseUp();
+                  }}
                 >
                   <div
                     className={
@@ -211,21 +237,32 @@ const CustomizeNew = () => {
                   {stickerTheme !== "No Sticker" && stickers.map((sticker, index) => (
                     <div
                       key={index}
-                      className="absolute text-2xl sm:text-3xl cursor-move select-none"
+                      className={`absolute text-2xl sm:text-3xl select-none transition-all ${
+                        draggingStickerIndex === index 
+                          ? 'cursor-grabbing scale-110 z-50' 
+                          : 'cursor-grab hover:scale-105'
+                      }`}
                       style={{
                         left: `${stickerPositions[index].x}%`,
                         top: `${stickerPositions[index].y}%`,
+                        transform: 'translate(-50%, -50%)',
+                        touchAction: 'none',
                       }}
-                      onMouseDown={(e) => e.preventDefault()}
-                      onMouseMove={(e) => handleStickerDrag(index, e)}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleStickerMouseDown(index);
+                      }}
                     >
-                      {stickerTheme === "Girly Pop" && "💖"}
-                      {stickerTheme === "Cute" && "🎀"}
-                      {stickerTheme === "Mofusand" && "🐱"}
-                      {stickerTheme === "Shin Chan" && "⭐"}
-                      {stickerTheme === "Miffy" && "🐰"}
-                      {stickerTheme === "Mark's Solo" && "🎸"}
-                      {stickerTheme === "Midnight Garden" && "🌙"}
+                      <div className={`${draggingStickerIndex === index ? 'animate-pulse' : ''}`}>
+                        {stickerTheme === "Girly Pop" && "💖"}
+                        {stickerTheme === "Cute" && "🎀"}
+                        {stickerTheme === "Mofusand" && "🐱"}
+                        {stickerTheme === "Shin Chan" && "⭐"}
+                        {stickerTheme === "Miffy" && "🐰"}
+                        {stickerTheme === "Mark's Solo" && "🎸"}
+                        {stickerTheme === "Midnight Garden" && "🌙"}
+                      </div>
                     </div>
                   ))}
                   
@@ -342,7 +379,7 @@ const CustomizeNew = () => {
               {/* Stickers */}
               <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6">
                 <h3 className="font-semibold text-foreground mb-4">Stickers</h3>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2 mb-3">
                   {stickerThemes.map((theme) => (
                     <Button
                       key={theme}
@@ -360,6 +397,23 @@ const CustomizeNew = () => {
                     </Button>
                   ))}
                 </div>
+                {stickerTheme !== "No Sticker" && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setStickerPositions(generateRandomStickerPositions())}
+                      className="flex-1"
+                    >
+                      Randomize Positions
+                    </Button>
+                  </div>
+                )}
+                {stickerTheme !== "No Sticker" && (
+                  <p className="text-xs text-muted-foreground mt-3">
+                    💡 Drag stickers in the preview to reposition them
+                  </p>
+                )}
               </div>
 
               {/* Text Input */}
