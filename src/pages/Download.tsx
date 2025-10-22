@@ -74,7 +74,7 @@ const DownloadPage = () => {
           h = photoHeight;
         }
 
-        // Draw photo with rounded corners
+        // Draw photo with rounded corners and preserved aspect ratio (cover behavior)
         ctx.save();
         const radius = 12;
         ctx.beginPath();
@@ -89,7 +89,28 @@ const DownloadPage = () => {
         ctx.quadraticCurveTo(x, y, x + radius, y);
         ctx.closePath();
         ctx.clip();
-        ctx.drawImage(img, x, y, w, h);
+        
+        // Calculate aspect ratios
+        const imgAspect = img.width / img.height;
+        const boxAspect = w / h;
+        
+        let sx, sy, sw, sh;
+        
+        if (imgAspect > boxAspect) {
+          // Image is wider - crop sides
+          sh = img.height;
+          sw = img.height * boxAspect;
+          sx = (img.width - sw) / 2;
+          sy = 0;
+        } else {
+          // Image is taller - crop top/bottom
+          sw = img.width;
+          sh = img.width / boxAspect;
+          sx = 0;
+          sy = (img.height - sh) / 2;
+        }
+        
+        ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
         ctx.restore();
       });
 
