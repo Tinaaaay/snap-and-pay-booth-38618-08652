@@ -27,7 +27,12 @@ const Capture = () => {
   const startCamera = async () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: 1280, height: 720 },
+        video: { 
+          facingMode: "user", 
+          width: { ideal: 1280 }, 
+          height: { ideal: 720 },
+          aspectRatio: { ideal: 2.5 } // Match final output aspect ratio (400:160)
+        },
         audio: false,
       });
       setStream(mediaStream);
@@ -49,12 +54,31 @@ const Capture = () => {
     if (!videoRef.current) return;
 
     const canvas = document.createElement("canvas");
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
+    const targetAspect = 2.5; // 400:160 ratio
+    const videoAspect = videoRef.current.videoWidth / videoRef.current.videoHeight;
+    
+    // Calculate crop dimensions to match target aspect ratio
+    let sourceWidth, sourceHeight, sourceX, sourceY;
+    if (videoAspect > targetAspect) {
+      // Video is wider - crop sides
+      sourceHeight = videoRef.current.videoHeight;
+      sourceWidth = sourceHeight * targetAspect;
+      sourceX = (videoRef.current.videoWidth - sourceWidth) / 2;
+      sourceY = 0;
+    } else {
+      // Video is taller - crop top/bottom
+      sourceWidth = videoRef.current.videoWidth;
+      sourceHeight = sourceWidth / targetAspect;
+      sourceX = 0;
+      sourceY = (videoRef.current.videoHeight - sourceHeight) / 2;
+    }
+    
+    canvas.width = sourceWidth;
+    canvas.height = sourceHeight;
     const ctx = canvas.getContext("2d");
     
     if (ctx) {
-      ctx.drawImage(videoRef.current, 0, 0);
+      ctx.drawImage(videoRef.current, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
       const photoData = canvas.toDataURL("image/png");
       setCapturedPhotos((prev) => [...prev, photoData]);
     }
@@ -76,12 +100,31 @@ const Capture = () => {
       if (!videoRef.current) continue;
       
       const canvas = document.createElement("canvas");
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
+      const targetAspect = 2.5; // 400:160 ratio
+      const videoAspect = videoRef.current.videoWidth / videoRef.current.videoHeight;
+      
+      // Calculate crop dimensions to match target aspect ratio
+      let sourceWidth, sourceHeight, sourceX, sourceY;
+      if (videoAspect > targetAspect) {
+        // Video is wider - crop sides
+        sourceHeight = videoRef.current.videoHeight;
+        sourceWidth = sourceHeight * targetAspect;
+        sourceX = (videoRef.current.videoWidth - sourceWidth) / 2;
+        sourceY = 0;
+      } else {
+        // Video is taller - crop top/bottom
+        sourceWidth = videoRef.current.videoWidth;
+        sourceHeight = sourceWidth / targetAspect;
+        sourceX = 0;
+        sourceY = (videoRef.current.videoHeight - sourceHeight) / 2;
+      }
+      
+      canvas.width = sourceWidth;
+      canvas.height = sourceHeight;
       const ctx = canvas.getContext("2d");
       
       if (ctx) {
-        ctx.drawImage(videoRef.current, 0, 0);
+        ctx.drawImage(videoRef.current, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
         const photoData = canvas.toDataURL("image/png");
         collectedPhotos.push(photoData);
         setCapturedPhotos([...collectedPhotos]); // Update UI
@@ -144,13 +187,13 @@ const Capture = () => {
       <div className="flex-1 flex flex-col lg:flex-row items-center justify-center p-4 gap-4 lg:gap-8">
         {/* Camera feed */}
         <div className="relative w-full lg:w-auto">
-          <div className="relative rounded-3xl overflow-hidden shadow-soft bg-black max-w-2xl mx-auto">
+          <div className="relative rounded-3xl overflow-hidden shadow-soft bg-black max-w-2xl mx-auto" style={{ aspectRatio: '2.5/1' }}>
             <video
               ref={videoRef}
               autoPlay
               playsInline
               muted
-              className={`w-full ${getFilterClass()}`}
+              className={`w-full h-full object-cover ${getFilterClass()}`}
             />
             
             {/* Countdown overlay */}

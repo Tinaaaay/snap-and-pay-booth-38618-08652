@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,9 @@ const CustomizeNew = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const photos = location.state?.photos || [];
+  
+  // Detect mobile device
+  const [isMobile, setIsMobile] = useState(false);
   
   const [layout, setLayout] = useState<"vertical" | "grid">("vertical");
   const [frameColor, setFrameColor] = useState("#60A5FA");
@@ -27,6 +30,16 @@ const CustomizeNew = () => {
   const [isDraggingText, setIsDraggingText] = useState(false);
   
   const stickers = ["💖", "✨", "🎀", "⭐", "🌸"];
+  
+  // Detect mobile on mount
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   // Generate random sticker positions around edges (not covering center)
   const generateRandomStickerPositions = () => {
@@ -238,17 +251,19 @@ const CustomizeNew = () => {
                     <div
                       key={index}
                       className={`absolute text-2xl sm:text-3xl select-none transition-all ${
-                        draggingStickerIndex === index 
+                        !isMobile && draggingStickerIndex === index 
                           ? 'cursor-grabbing scale-110 z-50' 
-                          : 'cursor-grab hover:scale-105'
+                          : !isMobile ? 'cursor-grab hover:scale-105' : ''
                       }`}
                       style={{
                         left: `${stickerPositions[index].x}%`,
                         top: `${stickerPositions[index].y}%`,
                         transform: 'translate(-50%, -50%)',
                         touchAction: 'none',
+                        pointerEvents: isMobile ? 'none' : 'auto',
                       }}
                       onMouseDown={(e) => {
+                        if (isMobile) return;
                         e.preventDefault();
                         e.stopPropagation();
                         handleStickerMouseDown(index);
@@ -409,9 +424,14 @@ const CustomizeNew = () => {
                     </Button>
                   </div>
                 )}
-                {stickerTheme !== "No Sticker" && (
+                {stickerTheme !== "No Sticker" && !isMobile && (
                   <p className="text-xs text-muted-foreground mt-3">
                     💡 Drag stickers in the preview to reposition them
+                  </p>
+                )}
+                {stickerTheme !== "No Sticker" && isMobile && (
+                  <p className="text-xs text-muted-foreground mt-3">
+                    ℹ️ Sticker positions are fixed on mobile devices
                   </p>
                 )}
               </div>
