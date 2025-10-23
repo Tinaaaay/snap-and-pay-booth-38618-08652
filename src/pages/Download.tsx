@@ -39,9 +39,21 @@ const DownloadPage = () => {
       canvas.height = (photoHeight * 2) + spacing + padding * 2 + bottomSpace;
     }
 
-    // Fill background with frame color
-    ctx.fillStyle = customization?.frame || "#F472B6";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Fill background with frame color or image
+    if (customization?.frameImage) {
+      // Load and draw frame image
+      const frameImg = new Image();
+      await new Promise((resolve, reject) => {
+        frameImg.onload = resolve;
+        frameImg.onerror = reject;
+        frameImg.src = customization.frameImage;
+      });
+      ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
+    } else {
+      // Fill with solid color
+      ctx.fillStyle = customization?.frame || "#F472B6";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
 
     // Load and draw photos
     const photoPromises = photos.map((photoUrl: string) => {

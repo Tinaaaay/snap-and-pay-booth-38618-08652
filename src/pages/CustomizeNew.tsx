@@ -7,6 +7,18 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, LayoutGrid, LayoutList, Move } from "lucide-react";
 
+// Import frame images
+import frame1 from "@/assets/frames/frame1.jpg";
+import frame2 from "@/assets/frames/frame2.jpg";
+import frame3 from "@/assets/frames/frame3.jpg";
+import frame4 from "@/assets/frames/frame4.jpg";
+import frame5 from "@/assets/frames/frame5.jpg";
+import frame6 from "@/assets/frames/frame6.jpg";
+import frame7 from "@/assets/frames/frame7.jpg";
+import frame8 from "@/assets/frames/frame8.jpg";
+import frame9 from "@/assets/frames/frame9.jpg";
+import frame10 from "@/assets/frames/frame10.jpg";
+
 const CustomizeNew = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -18,6 +30,7 @@ const CustomizeNew = () => {
   const [layout, setLayout] = useState<"vertical" | "grid">("vertical");
   const [frameColor, setFrameColor] = useState("#60A5FA");
   const [customColor, setCustomColor] = useState("#60A5FA");
+  const [frameImage, setFrameImage] = useState<string | null>(null);
   const [stickerTheme, setStickerTheme] = useState("No Sticker");
   const [addDate, setAddDate] = useState(false);
   const [addTime, setAddTime] = useState(false);
@@ -81,6 +94,19 @@ const CustomizeNew = () => {
     { name: "Red", value: "#DC2626" },
   ];
 
+  const designedFrames = [
+    { name: "Frame 1", image: frame1 },
+    { name: "Frame 2", image: frame2 },
+    { name: "Frame 3", image: frame3 },
+    { name: "Frame 4", image: frame4 },
+    { name: "Frame 5", image: frame5 },
+    { name: "Frame 6", image: frame6 },
+    { name: "Frame 7", image: frame7 },
+    { name: "Frame 8", image: frame8 },
+    { name: "Frame 9", image: frame9 },
+    { name: "Frame 10", image: frame10 },
+  ];
+
   const fontOptions = [
     { name: "Sans Serif", value: "sans-serif" },
     { name: "Serif", value: "serif" },
@@ -107,6 +133,7 @@ const CustomizeNew = () => {
         customization: {
           layout,
           frame: frameColor,
+          frameImage,
           stickerTheme,
           addDate,
           addTime,
@@ -207,9 +234,14 @@ const CustomizeNew = () => {
                 Photo Strip Preview
               </h3>
               <div className="flex justify-center">
-                <div
-                  className={`rounded-3xl p-6 shadow-soft max-w-md w-full relative select-none`}
-                  style={{ backgroundColor: frameColor }}
+              <div
+                  className={`rounded-3xl p-6 shadow-soft max-w-md w-full relative select-none overflow-hidden`}
+                  style={{ 
+                    backgroundColor: frameImage ? 'transparent' : frameColor,
+                    backgroundImage: frameImage ? `url(${frameImage})` : 'none',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
+                  }}
                   onMouseMove={(e) => {
                     handleTextDrag(e);
                     handleStickerDrag(e);
@@ -351,9 +383,12 @@ const CustomizeNew = () => {
                   {frameColors.map((color) => (
                     <button
                       key={color.value}
-                      onClick={() => setFrameColor(color.value)}
+                      onClick={() => {
+                        setFrameColor(color.value);
+                        setFrameImage(null);
+                      }}
                       className={`h-12 rounded-lg transition-all border-2 ${
-                        frameColor === color.value
+                        frameColor === color.value && !frameImage
                           ? "ring-4 ring-primary ring-offset-2 scale-105"
                           : "hover:scale-105 border-border"
                       }`}
@@ -365,9 +400,12 @@ const CustomizeNew = () => {
                 <div className="flex items-center gap-3">
                   <Checkbox
                     id="custom-color"
-                    checked={frameColor === customColor && !frameColors.find(c => c.value === customColor)}
+                    checked={frameColor === customColor && !frameColors.find(c => c.value === customColor) && !frameImage}
                     onCheckedChange={(checked) => {
-                      if (checked) setFrameColor(customColor);
+                      if (checked) {
+                        setFrameColor(customColor);
+                        setFrameImage(null);
+                      }
                     }}
                   />
                   <label
@@ -382,12 +420,42 @@ const CustomizeNew = () => {
                     onChange={(e) => {
                       setCustomColor(e.target.value);
                       setFrameColor(e.target.value);
+                      setFrameImage(null);
                     }}
                     className="w-20 h-10 cursor-pointer"
                   />
                   <span className="text-sm text-muted-foreground">
                     {customColor}
                   </span>
+                </div>
+              </div>
+
+              {/* Designed Frames */}
+              <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6">
+                <h3 className="font-semibold text-foreground mb-4">
+                  Decorated Frame Options
+                </h3>
+                <div className="grid grid-cols-3 gap-3">
+                  {designedFrames.map((frame) => (
+                    <button
+                      key={frame.name}
+                      onClick={() => {
+                        setFrameImage(frame.image);
+                      }}
+                      className={`h-20 rounded-lg transition-all border-2 overflow-hidden ${
+                        frameImage === frame.image
+                          ? "ring-4 ring-primary ring-offset-2 scale-105"
+                          : "hover:scale-105 border-border"
+                      }`}
+                      title={frame.name}
+                    >
+                      <img 
+                        src={frame.image} 
+                        alt={frame.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
                 </div>
               </div>
 

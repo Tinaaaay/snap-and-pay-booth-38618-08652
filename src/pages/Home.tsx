@@ -148,7 +148,7 @@ const Home = () => {
             <DialogTitle className="text-2xl font-bold">Privacy Policy</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 text-foreground">
-            <p className="text-sm text-muted-foreground">Last updated: January 2025</p>
+            <p className="text-sm text-muted-foreground">Last updated: December 2025</p>
             
             <h3 className="font-semibold text-lg mt-4">Your Privacy Matters</h3>
             <p>
