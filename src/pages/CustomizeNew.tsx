@@ -28,6 +28,16 @@ import frame17 from "@/assets/frames/frame17.jpg";
 import frame18 from "@/assets/frames/frame18.jpg";
 import frame19 from "@/assets/frames/frame19.jpg";
 import frame20 from "@/assets/frames/frame20.jpg";
+import frame21 from "@/assets/frames/frame21.jpg";
+import frame22 from "@/assets/frames/frame22.jpg";
+import frame23 from "@/assets/frames/frame23.jpg";
+import frame24 from "@/assets/frames/frame24.jpg";
+import frame25 from "@/assets/frames/frame25.jpg";
+import frame26 from "@/assets/frames/frame26.jpg";
+import frame27 from "@/assets/frames/frame27.jpg";
+import frame28 from "@/assets/frames/frame28.jpg";
+import frame29 from "@/assets/frames/frame29.jpg";
+import frame30 from "@/assets/frames/frame30.jpg";
 
 const CustomizeNew = () => {
   const navigate = useNavigate();
@@ -125,6 +135,16 @@ const CustomizeNew = () => {
     { name: "Frame 18", image: frame18 },
     { name: "Frame 19", image: frame19 },
     { name: "Frame 20", image: frame20 },
+    { name: "Frame 21", image: frame21 },
+    { name: "Frame 22", image: frame22 },
+    { name: "Frame 23", image: frame23 },
+    { name: "Frame 24", image: frame24 },
+    { name: "Frame 25", image: frame25 },
+    { name: "Frame 26", image: frame26 },
+    { name: "Frame 27", image: frame27 },
+    { name: "Frame 28", image: frame28 },
+    { name: "Frame 29", image: frame29 },
+    { name: "Frame 30", image: frame30 },
   ];
 
   const fontOptions = [
