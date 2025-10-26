@@ -1,29 +1,20 @@
 import { useRef, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Download, RotateCcw, Home, Printer, QrCode } from "lucide-react";
+import { Download, RotateCcw, Home, Printer, Share2 } from "lucide-react";
 import { toast } from "sonner";
-import { QRCodeSVG } from "qrcode.react";
 
 const DownloadPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { photos, customization } = location.state || {};
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [imageDataUrl, setImageDataUrl] = useState<string>("");
 
   useEffect(() => {
     if (photos && customization && canvasRef.current) {
       generateFinalImage();
     }
   }, [photos, customization]);
-
-  useEffect(() => {
-    // Update QR code data URL when canvas changes
-    if (canvasRef.current && canvasRef.current.width > 0) {
-      setImageDataUrl(canvasRef.current.toDataURL("image/png"));
-    }
-  }, [canvasRef.current?.toDataURL()]);
 
   const generateFinalImage = async () => {
     if (!canvasRef.current || !photos) return;
@@ -196,8 +187,6 @@ const DownloadPage = () => {
         ctx.fillText(time, canvas.width / 2, textY);
       }
 
-      // Store the data URL for QR code
-      setImageDataUrl(canvas.toDataURL("image/png"));
     } catch (error) {
       console.error("Error generating image:", error);
       toast.error("Failed to generate final image");
@@ -343,25 +332,22 @@ const DownloadPage = () => {
             />
           </div>
 
-          {/* QR Code Section */}
-          {imageDataUrl && (
-            <div className="flex justify-center mb-6">
-              <div className="bg-white p-4 rounded-2xl shadow-soft">
-                <p className="text-sm font-semibold text-center mb-3 text-foreground">
-                  Scan for Softcopy Access
+          {/* Info banner for mobile users */}
+          <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 mb-6 max-w-2xl mx-auto">
+            <div className="flex items-start gap-3">
+              <Share2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-foreground mb-1">
+                  Save Your Photo Strip
                 </p>
-                <QRCodeSVG 
-                  value={imageDataUrl} 
-                  size={150}
-                  level="L"
-                  includeMargin={true}
-                />
-                <p className="text-xs text-muted-foreground text-center mt-2">
-                  Scan with your phone camera
+                <p className="text-xs text-muted-foreground">
+                  {/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) 
+                    ? "Tap the Share button below to save to your device or share with others"
+                    : "Click Download to save your photo strip, or Print for a physical copy"}
                 </p>
               </div>
             </div>
-          )}
+          </div>
 
           {/* Action buttons */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center max-w-2xl mx-auto px-4">
@@ -370,8 +356,17 @@ const DownloadPage = () => {
               onClick={handleDownload}
               className="w-full sm:flex-1 py-5 sm:py-6 rounded-full shadow-glow hover:shadow-soft transition-all gap-2"
             >
-              <Download className="w-5 h-5" />
-              {/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? "Share" : "Download"}
+              {/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? (
+                <>
+                  <Share2 className="w-5 h-5" />
+                  Share / Save
+                </>
+              ) : (
+                <>
+                  <Download className="w-5 h-5" />
+                  Download
+                </>
+              )}
             </Button>
             <Button
               size="lg"
