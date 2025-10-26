@@ -74,26 +74,51 @@ const CustomizeNew = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
   
-  // Generate random sticker positions around edges (not covering center)
+  // Generate random sticker positions around edges with no overlaps
   const generateRandomStickerPositions = () => {
     const positions = [];
+    const minDistance = 15; // Minimum distance between stickers (in percentage)
+    const edgeMargin = 5; // Keep stickers away from absolute edges
+    
+    // Check if new position overlaps with existing ones
+    const isValidPosition = (newPos: {x: number, y: number}, existingPositions: {x: number, y: number}[]) => {
+      for (const pos of existingPositions) {
+        const distance = Math.sqrt(Math.pow(newPos.x - pos.x, 2) + Math.pow(newPos.y - pos.y, 2));
+        if (distance < minDistance) {
+          return false;
+        }
+      }
+      return true;
+    };
+    
     for (let i = 0; i < 5; i++) {
-      // Randomly choose edge: 0=top, 1=right, 2=bottom, 3=left
-      const edge = Math.floor(Math.random() * 4);
-      let x, y;
+      let attempts = 0;
+      let validPosition = false;
+      let x = 0, y = 0;
       
-      if (edge === 0) { // Top edge
-        x = Math.random() * 80 + 10; // 10-90%
-        y = Math.random() * 15; // 0-15%
-      } else if (edge === 1) { // Right edge
-        x = 85 + Math.random() * 10; // 85-95%
-        y = Math.random() * 80 + 10; // 10-90%
-      } else if (edge === 2) { // Bottom edge
-        x = Math.random() * 80 + 10; // 10-90%
-        y = 85 + Math.random() * 10; // 85-95%
-      } else { // Left edge
-        x = Math.random() * 10; // 0-10%
-        y = Math.random() * 80 + 10; // 10-90%
+      while (!validPosition && attempts < 50) {
+        // Randomly choose edge: 0=top, 1=right, 2=bottom, 3=left
+        const edge = Math.floor(Math.random() * 4);
+        
+        if (edge === 0) { // Top edge
+          x = Math.random() * (90 - edgeMargin * 2) + edgeMargin; 
+          y = Math.random() * 12 + edgeMargin; // Stay at top
+        } else if (edge === 1) { // Right edge
+          x = 88 + Math.random() * (95 - 88 - edgeMargin);
+          y = Math.random() * (90 - edgeMargin * 2) + edgeMargin;
+        } else if (edge === 2) { // Bottom edge
+          x = Math.random() * (90 - edgeMargin * 2) + edgeMargin;
+          y = 88 + Math.random() * (95 - 88 - edgeMargin);
+        } else { // Left edge
+          x = edgeMargin + Math.random() * 7;
+          y = Math.random() * (90 - edgeMargin * 2) + edgeMargin;
+        }
+        
+        const newPos = { x, y };
+        if (isValidPosition(newPos, positions)) {
+          validPosition = true;
+        }
+        attempts++;
       }
       
       positions.push({ x, y });
@@ -213,12 +238,39 @@ const CustomizeNew = () => {
     if (rect) {
       const x = ((e.clientX - rect.left) / rect.width) * 100;
       const y = ((e.clientY - rect.top) / rect.height) * 100;
+      
+      // Keep stickers strictly within frame bounds and at edges only
+      const edgeMargin = 5; // Distance from absolute edge
+      const maxInset = 12; // Maximum distance from edge before being "in the middle"
+      
+      let finalX = x;
+      let finalY = y;
+      
+      // Determine which edge the sticker should stick to
+      const distToLeft = x;
+      const distToRight = 100 - x;
+      const distToTop = y;
+      const distToBottom = 100 - y;
+      
+      const minDist = Math.min(distToLeft, distToRight, distToTop, distToBottom);
+      
+      // Snap to nearest edge
+      if (minDist === distToLeft) {
+        finalX = Math.max(edgeMargin, Math.min(maxInset, x));
+        finalY = Math.max(edgeMargin, Math.min(95, y));
+      } else if (minDist === distToRight) {
+        finalX = Math.max(88, Math.min(95, x));
+        finalY = Math.max(edgeMargin, Math.min(95, y));
+      } else if (minDist === distToTop) {
+        finalX = Math.max(edgeMargin, Math.min(95, x));
+        finalY = Math.max(edgeMargin, Math.min(maxInset, y));
+      } else {
+        finalX = Math.max(edgeMargin, Math.min(95, x));
+        finalY = Math.max(88, Math.min(95, y));
+      }
+      
       const newPositions = [...stickerPositions];
-      // Keep stickers within bounds (2% to 95% to prevent cutoff)
-      newPositions[draggingStickerIndex] = { 
-        x: Math.max(2, Math.min(95, x)), 
-        y: Math.max(2, Math.min(95, y)) 
-      };
+      newPositions[draggingStickerIndex] = { x: finalX, y: finalY };
       setStickerPositions(newPositions);
     }
   };

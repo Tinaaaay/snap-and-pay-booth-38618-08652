@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Camera, ArrowLeft } from "lucide-react";
+import { Camera, ArrowLeft, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 const Capture = () => {
@@ -14,6 +14,8 @@ const Capture = () => {
   const [capturedPhotos, setCapturedPhotos] = useState<string[]>([]);
   const [isCapturing, setIsCapturing] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [uploadMode, setUploadMode] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filters = ["No Filter", "B&W", "Sepia", "Vintage", "Soft", "Noir", "Vivid"];
 
@@ -145,6 +147,75 @@ const Capture = () => {
     }, 1000);
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const uploadedPhotos: string[] = [];
+    
+    for (let i = 0; i < Math.min(files.length, photoCount); i++) {
+      const file = files[i];
+      if (!file.type.startsWith('image/')) {
+        toast.error(`${file.name} is not an image file`);
+        continue;
+      }
+
+      // Convert to data URL
+      const reader = new FileReader();
+      const dataUrl = await new Promise<string>((resolve) => {
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.readAsDataURL(file);
+      });
+
+      // Process image to match aspect ratio
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = reject;
+        image.src = dataUrl;
+      });
+
+      const canvas = document.createElement("canvas");
+      const targetAspect = 2.5; // 400:160 ratio
+      const imgAspect = img.width / img.height;
+      
+      let sourceWidth, sourceHeight, sourceX, sourceY;
+      if (imgAspect > targetAspect) {
+        sourceHeight = img.height;
+        sourceWidth = img.height * targetAspect;
+        sourceX = (img.width - sourceWidth) / 2;
+        sourceY = 0;
+      } else {
+        sourceWidth = img.width;
+        sourceHeight = img.width / targetAspect;
+        sourceX = 0;
+        sourceY = (img.height - sourceHeight) / 2;
+      }
+      
+      canvas.width = sourceWidth;
+      canvas.height = sourceHeight;
+      const ctx = canvas.getContext("2d");
+      
+      if (ctx) {
+        ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
+        uploadedPhotos.push(canvas.toDataURL("image/png"));
+      }
+    }
+
+    if (uploadedPhotos.length > 0) {
+      setCapturedPhotos(uploadedPhotos);
+      toast.success(`${uploadedPhotos.length} photo(s) uploaded!`);
+      
+      // If we have enough photos, navigate to customize
+      if (uploadedPhotos.length === photoCount) {
+        setTimeout(() => {
+          stopCamera();
+          navigate("/customize", { state: { photos: uploadedPhotos } });
+        }, 1000);
+      }
+    }
+  };
+
   const getFilterClass = () => {
     switch (selectedFilter) {
       case "B&W":
@@ -213,16 +284,42 @@ const Capture = () => {
             </div>
           </div>
 
-          {/* Start capture button */}
+          {/* Start capture and upload buttons */}
           {!isCapturing && capturedPhotos.length === 0 && (
-            <div className="mt-4 sm:mt-6 text-center">
+            <div className="mt-4 sm:mt-6 text-center space-y-3">
               <Button
                 size="lg"
                 onClick={startCaptureSequence}
-                className="px-8 sm:px-12 py-5 sm:py-6 rounded-full shadow-glow hover:shadow-soft transition-all"
+                className="px-8 sm:px-12 py-5 sm:py-6 rounded-full shadow-glow hover:shadow-soft transition-all w-full sm:w-auto"
               >
+                <Camera className="w-5 h-5 mr-2" />
                 Start Capture
               </Button>
+              <div className="flex items-center gap-2 justify-center">
+                <div className="h-px bg-border flex-1 max-w-24"></div>
+                <span className="text-sm text-muted-foreground">or</span>
+                <div className="h-px bg-border flex-1 max-w-24"></div>
+              </div>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                className="px-8 sm:px-12 py-5 sm:py-6 rounded-full w-full sm:w-auto"
+              >
+                <Upload className="w-5 h-5 mr-2" />
+                Upload Photos
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              <p className="text-xs text-muted-foreground mt-2">
+                Upload up to {photoCount} photos from your device
+              </p>
             </div>
           )}
         </div>

@@ -1,20 +1,29 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Download, RotateCcw, Home, Printer } from "lucide-react";
+import { Download, RotateCcw, Home, Printer, QrCode } from "lucide-react";
 import { toast } from "sonner";
+import { QRCodeSVG } from "qrcode.react";
 
 const DownloadPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { photos, customization } = location.state || {};
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [imageDataUrl, setImageDataUrl] = useState<string>("");
 
   useEffect(() => {
     if (photos && customization && canvasRef.current) {
       generateFinalImage();
     }
   }, [photos, customization]);
+
+  useEffect(() => {
+    // Update QR code data URL when canvas changes
+    if (canvasRef.current && canvasRef.current.width > 0) {
+      setImageDataUrl(canvasRef.current.toDataURL("image/png"));
+    }
+  }, [canvasRef.current?.toDataURL()]);
 
   const generateFinalImage = async () => {
     if (!canvasRef.current || !photos) return;
@@ -187,6 +196,8 @@ const DownloadPage = () => {
         ctx.fillText(time, canvas.width / 2, textY);
       }
 
+      // Store the data URL for QR code
+      setImageDataUrl(canvas.toDataURL("image/png"));
     } catch (error) {
       console.error("Error generating image:", error);
       toast.error("Failed to generate final image");
@@ -197,15 +208,52 @@ const DownloadPage = () => {
     if (!canvasRef.current) return;
 
     try {
-      const link = document.createElement("a");
-      link.download = `kodasnap-${Date.now()}.png`;
-      link.href = canvasRef.current.toDataURL("image/png");
-      link.click();
-      toast.success("Your photo strip has been downloaded!");
+      // Use blob for better mobile compatibility
+      canvasRef.current.toBlob((blob) => {
+        if (!blob) {
+          toast.error("Failed to create image");
+          return;
+        }
+
+        // Check if we're on mobile
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        
+        if (isMobile && navigator.share) {
+          // Use Web Share API on mobile if available
+          const file = new File([blob], `kodasnap-${Date.now()}.png`, { type: "image/png" });
+          navigator.share({
+            files: [file],
+            title: "KodaSnap Photo",
+            text: "Check out my KodaSnap photo!"
+          }).then(() => {
+            toast.success("Share successful!");
+          }).catch((error) => {
+            // Fallback if share fails
+            if (error.name !== 'AbortError') {
+              downloadFallback(blob);
+            }
+          });
+        } else {
+          // Standard download for desktop or if share not available
+          downloadFallback(blob);
+        }
+      }, "image/png");
     } catch (error) {
       console.error("Download error:", error);
       toast.error("Failed to download photo");
     }
+  };
+
+  const downloadFallback = (blob: Blob) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `kodasnap-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success("Your photo strip has been downloaded!");
   };
 
   const handlePrint = () => {
@@ -295,6 +343,26 @@ const DownloadPage = () => {
             />
           </div>
 
+          {/* QR Code Section */}
+          {imageDataUrl && (
+            <div className="flex justify-center mb-6">
+              <div className="bg-white p-4 rounded-2xl shadow-soft">
+                <p className="text-sm font-semibold text-center mb-3 text-foreground">
+                  Scan for Softcopy Access
+                </p>
+                <QRCodeSVG 
+                  value={imageDataUrl} 
+                  size={150}
+                  level="L"
+                  includeMargin={true}
+                />
+                <p className="text-xs text-muted-foreground text-center mt-2">
+                  Scan with your phone camera
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Action buttons */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center max-w-2xl mx-auto px-4">
             <Button
@@ -303,7 +371,7 @@ const DownloadPage = () => {
               className="w-full sm:flex-1 py-5 sm:py-6 rounded-full shadow-glow hover:shadow-soft transition-all gap-2"
             >
               <Download className="w-5 h-5" />
-              Download
+              {/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? "Share" : "Download"}
             </Button>
             <Button
               size="lg"
