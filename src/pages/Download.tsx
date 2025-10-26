@@ -1,8 +1,15 @@
 import { useRef, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Download, RotateCcw, Home, Printer, Share2 } from "lucide-react";
+import { Download, RotateCcw, Home, Printer, Share2, Mail, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 const DownloadPage = () => {
   const navigate = useNavigate();
@@ -193,56 +200,144 @@ const DownloadPage = () => {
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!canvasRef.current) return;
 
     try {
-      // Use blob for better mobile compatibility
-      canvasRef.current.toBlob((blob) => {
-        if (!blob) {
-          toast.error("Failed to create image");
-          return;
-        }
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvasRef.current?.toBlob((b) => {
+          if (b) resolve(b);
+          else reject(new Error("Failed to create blob"));
+        }, "image/png");
+      });
 
-        // Check if we're on mobile
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        
-        if (isMobile && navigator.share) {
-          // Use Web Share API on mobile if available
-          const file = new File([blob], `kodasnap-${Date.now()}.png`, { type: "image/png" });
-          navigator.share({
-            files: [file],
-            title: "KodaSnap Photo",
-            text: "Check out my KodaSnap photo!"
-          }).then(() => {
-            toast.success("Share successful!");
-          }).catch((error) => {
-            // Fallback if share fails
-            if (error.name !== 'AbortError') {
-              downloadFallback(blob);
-            }
-          });
-        } else {
-          // Standard download for desktop or if share not available
-          downloadFallback(blob);
-        }
-      }, "image/png");
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `kodasnap-${Date.now()}.png`;
+      
+      // Force download on mobile
+      link.setAttribute('download', `kodasnap-${Date.now()}.png`);
+      link.style.display = 'none';
+      
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
+      
+      toast.success("Photo downloaded successfully!");
     } catch (error) {
       console.error("Download error:", error);
       toast.error("Failed to download photo");
     }
   };
 
-  const downloadFallback = (blob: Blob) => {
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `kodasnap-${Date.now()}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast.success("Your photo strip has been downloaded!");
+  const handleShare = async () => {
+    if (!canvasRef.current) return;
+
+    try {
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvasRef.current?.toBlob((b) => {
+          if (b) resolve(b);
+          else reject(new Error("Failed to create blob"));
+        }, "image/png");
+      });
+
+      const file = new File([blob], `kodasnap-${Date.now()}.png`, { type: "image/png" });
+
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "KodaSnap Photo Strip",
+          text: "Check out my KodaSnap photo strip! 📸"
+        });
+        toast.success("Shared successfully!");
+      } else {
+        // Fallback to download if sharing not supported
+        await handleDownload();
+      }
+    } catch (error: any) {
+      if (error.name !== 'AbortError') {
+        console.error("Share error:", error);
+        toast.error("Share cancelled or not supported");
+      }
+    }
+  };
+
+  const handleEmailShare = async () => {
+    if (!canvasRef.current) return;
+
+    try {
+      const dataUrl = canvasRef.current.toDataURL("image/png");
+      
+      // For mobile, try to use share with email
+      if (navigator.share) {
+        const blob = await new Promise<Blob>((resolve, reject) => {
+          canvasRef.current?.toBlob((b) => {
+            if (b) resolve(b);
+            else reject(new Error("Failed to create blob"));
+          }, "image/png");
+        });
+        
+        const file = new File([blob], `kodasnap-${Date.now()}.png`, { type: "image/png" });
+        
+        await navigator.share({
+          files: [file],
+          title: "KodaSnap Photo Strip",
+        });
+      } else {
+        // Desktop fallback - open default email client
+        const subject = encodeURIComponent("Check out my KodaSnap photo!");
+        const body = encodeURIComponent("I created this photo strip with KodaSnap! 📸\n\nAttach the downloaded image to share.");
+        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        toast.success("Opening email client...");
+        
+        // Also trigger download so they have the file
+        setTimeout(handleDownload, 500);
+      }
+    } catch (error: any) {
+      if (error.name !== 'AbortError') {
+        console.error("Email share error:", error);
+        toast.error("Please download and attach manually");
+      }
+    }
+  };
+
+  const handleMessengerShare = async () => {
+    if (!canvasRef.current) return;
+
+    try {
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvasRef.current?.toBlob((b) => {
+          if (b) resolve(b);
+          else reject(new Error("Failed to create blob"));
+        }, "image/png");
+      });
+
+      const file = new File([blob], `kodasnap-${Date.now()}.png`, { type: "image/png" });
+
+      // Try native share which includes Messenger on mobile
+      if (navigator.share) {
+        await navigator.share({
+          files: [file],
+          title: "KodaSnap Photo Strip",
+          text: "Check out my photo strip! 📸"
+        });
+      } else {
+        // Fallback: download the image
+        await handleDownload();
+        toast.success("Image downloaded! You can now share it via Messenger manually.");
+      }
+    } catch (error: any) {
+      if (error.name !== 'AbortError') {
+        console.error("Messenger share error:", error);
+        toast.error("Please download and share manually");
+      }
+    }
   };
 
   const handlePrint = () => {
@@ -332,18 +427,16 @@ const DownloadPage = () => {
             />
           </div>
 
-          {/* Info banner for mobile users */}
+          {/* Info banner */}
           <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 mb-6 max-w-2xl mx-auto">
             <div className="flex items-start gap-3">
               <Share2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-semibold text-foreground mb-1">
-                  Save Your Photo Strip
+                  Save & Share Your Photo Strip
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) 
-                    ? "Tap the Share button below to save to your device or share with others"
-                    : "Click Download to save your photo strip, or Print for a physical copy"}
+                  Download to your device or share via Bluetooth, Email, Messenger, and more!
                 </p>
               </div>
             </div>
@@ -356,22 +449,43 @@ const DownloadPage = () => {
               onClick={handleDownload}
               className="w-full sm:flex-1 py-5 sm:py-6 rounded-full shadow-glow hover:shadow-soft transition-all gap-2"
             >
-              {/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? (
-                <>
-                  <Share2 className="w-5 h-5" />
-                  Share / Save
-                </>
-              ) : (
-                <>
-                  <Download className="w-5 h-5" />
-                  Download
-                </>
-              )}
+              <Download className="w-5 h-5" />
+              Download
             </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="lg"
+                  variant="default"
+                  className="w-full sm:flex-1 py-5 sm:py-6 rounded-full shadow-glow hover:shadow-soft transition-all gap-2"
+                >
+                  <Share2 className="w-5 h-5" />
+                  Share
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-56">
+                <DropdownMenuItem onClick={handleShare} className="cursor-pointer py-3">
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share via... (Bluetooth, Apps)
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleEmailShare} className="cursor-pointer py-3">
+                  <Mail className="w-4 h-4 mr-2" />
+                  Share via Email
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleMessengerShare} className="cursor-pointer py-3">
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Share via Messenger
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <Button
               size="lg"
+              variant="outline"
               onClick={handlePrint}
-              className="w-full sm:flex-1 py-5 sm:py-6 rounded-full shadow-glow hover:shadow-soft transition-all gap-2"
+              className="w-full sm:flex-1 py-5 sm:py-6 rounded-full gap-2"
             >
               <Printer className="w-5 h-5" />
               Print
