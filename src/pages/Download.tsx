@@ -249,27 +249,34 @@ const DownloadPage = () => {
 
       const file = new File([blob], `kodasnap-${Date.now()}.png`, { type: "image/png" });
 
-      // Check if Web Share API is available and supports files
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: "KodaSnap Photo Strip",
-          text: "Check out my KodaSnap photo strip! 📸"
-        });
-        toast.success("Photo shared successfully!");
-      } else if (navigator.share) {
-        // Share API available but doesn't support files
-        toast.error("File sharing not supported on this device. Please use Download instead.");
+      // Check if Web Share API is available
+      if (navigator.share) {
+        try {
+          // Try sharing with files
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: "KodaSnap Photo Strip",
+              text: "Check out my KodaSnap photo strip! 📸"
+            });
+            toast.success("Photo shared successfully!");
+          } else {
+            // Share without files (will show share options but without file)
+            toast.error("File sharing not supported on this browser. Please use Download instead.");
+          }
+        } catch (error: any) {
+          if (error.name === 'AbortError') {
+            // User cancelled - this is normal
+            return;
+          }
+          throw error;
+        }
       } else {
-        toast.error("Sharing not supported on this browser. Please use Download instead.");
+        toast.error("Sharing not supported on this browser. Please use Download button instead.");
       }
     } catch (error: any) {
-      if (error.name === 'AbortError') {
-        // User cancelled the share - this is normal, don't show error
-        return;
-      }
       console.error("Share error:", error);
-      toast.error("Failed to share photo");
+      toast.error("Failed to share. Please use Download button.");
     }
   };
 
@@ -286,34 +293,40 @@ const DownloadPage = () => {
       
       const file = new File([blob], `kodasnap-${Date.now()}.png`, { type: "image/png" });
       
-      // Try to share via native share (includes email apps)
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: "KodaSnap Photo Strip",
-          text: "Check out my KodaSnap photo strip! 📸"
-        });
-        toast.success("Opening share options...");
-      } else {
-        // Fallback: open email client and inform user to attach
-        const subject = encodeURIComponent("Check out my KodaSnap photo!");
-        const body = encodeURIComponent("I created this photo strip with KodaSnap! 📸\n\nPlease find the attached image.");
+      // Try to share via native share (will show email apps on mobile)
+      if (navigator.share) {
+        try {
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: "KodaSnap Photo Strip",
+              text: "Check out my KodaSnap photo strip! 📸"
+            });
+            return;
+          }
+        } catch (error: any) {
+          if (error.name === 'AbortError') {
+            return;
+          }
+        }
+      }
+      
+      // Fallback: Auto-download and open email
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `kodasnap-${Date.now()}.png`;
+      link.click();
+      URL.revokeObjectURL(url);
+      
+      const subject = encodeURIComponent("Check out my KodaSnap photo!");
+      const body = encodeURIComponent("I created this photo strip with KodaSnap! 📸\n\nPlease find the attached image.");
+      setTimeout(() => {
         window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
-        
-        // Auto-download so user can attach it
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `kodasnap-${Date.now()}.png`;
-        link.click();
-        URL.revokeObjectURL(url);
-        
-        toast.success("Email opened and photo downloaded for attachment");
-      }
+      }, 500);
+      
+      toast.success("Photo downloaded! Email app opening...");
     } catch (error: any) {
-      if (error.name === 'AbortError') {
-        return;
-      }
       console.error("Email share error:", error);
       toast.error("Failed to share via email");
     }
@@ -332,21 +345,28 @@ const DownloadPage = () => {
 
       const file = new File([blob], `kodasnap-${Date.now()}.png`, { type: "image/png" });
 
-      // Use native share which will show all available apps including Messenger
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: "KodaSnap Photo Strip",
-          text: "Check out my photo strip! 📸"
-        });
-        toast.success("Opening share options...");
-      } else {
-        toast.error("Sharing not supported. Please use Download and share manually via Messenger.");
+      // Use native share which will show all available messaging apps
+      if (navigator.share) {
+        try {
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: "KodaSnap Photo Strip",
+              text: "Check out my photo strip! 📸"
+            });
+            toast.success("Opening share options...");
+            return;
+          }
+        } catch (error: any) {
+          if (error.name === 'AbortError') {
+            return;
+          }
+        }
       }
+      
+      // Fallback if share not available
+      toast.error("Sharing not supported. Please use Download and share manually via Messenger.");
     } catch (error: any) {
-      if (error.name === 'AbortError') {
-        return;
-      }
       console.error("Messenger share error:", error);
       toast.error("Failed to share");
     }
@@ -448,7 +468,7 @@ const DownloadPage = () => {
                   Save & Share Your Photo Strip
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Download to your device or share via Bluetooth, Email, Messenger, and more!
+                  Download to save, or use Share to send via Bluetooth, Messenger, Email, WhatsApp, and more!
                 </p>
               </div>
             </div>

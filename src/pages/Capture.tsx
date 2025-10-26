@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Camera, ArrowLeft, Upload } from "lucide-react";
+import { Camera, ArrowLeft, Upload, FlipHorizontal, Flashlight, FlashlightOff } from "lucide-react";
 import { toast } from "sonner";
 
 const Capture = () => {
@@ -16,6 +16,8 @@ const Capture = () => {
   const [countdown, setCountdown] = useState<number | null>(null);
   const [uploadMode, setUploadMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [mirrorMode, setMirrorMode] = useState(true);
+  const [flashEnabled, setFlashEnabled] = useState(false);
 
   const filters = ["No Filter", "B&W", "Sepia", "Vintage", "Soft", "Noir", "Vivid"];
 
@@ -25,6 +27,24 @@ const Capture = () => {
       stopCamera();
     };
   }, []);
+
+  // Handle flash toggle
+  useEffect(() => {
+    if (stream) {
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack && 'torch' in videoTrack.getCapabilities()) {
+        videoTrack.applyConstraints({
+          // @ts-ignore - torch is not in standard types yet
+          advanced: [{ torch: flashEnabled }]
+        }).catch(() => {
+          toast.error("Flash not supported on this device");
+        });
+      } else if (flashEnabled) {
+        toast.error("Flash not supported on this device");
+        setFlashEnabled(false);
+      }
+    }
+  }, [flashEnabled, stream]);
 
   const startCamera = async () => {
     try {
@@ -80,7 +100,15 @@ const Capture = () => {
     const ctx = canvas.getContext("2d");
     
     if (ctx) {
-      ctx.drawImage(videoRef.current, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
+      // Mirror the image if mirror mode is enabled
+      if (mirrorMode) {
+        ctx.save();
+        ctx.scale(-1, 1);
+        ctx.drawImage(videoRef.current, sourceX, sourceY, sourceWidth, sourceHeight, -sourceWidth, 0, sourceWidth, sourceHeight);
+        ctx.restore();
+      } else {
+        ctx.drawImage(videoRef.current, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
+      }
       const photoData = canvas.toDataURL("image/png");
       setCapturedPhotos((prev) => [...prev, photoData]);
     }
@@ -126,7 +154,15 @@ const Capture = () => {
       const ctx = canvas.getContext("2d");
       
       if (ctx) {
-        ctx.drawImage(videoRef.current, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
+        // Mirror the image if mirror mode is enabled
+        if (mirrorMode) {
+          ctx.save();
+          ctx.scale(-1, 1);
+          ctx.drawImage(videoRef.current, sourceX, sourceY, sourceWidth, sourceHeight, -sourceWidth, 0, sourceWidth, sourceHeight);
+          ctx.restore();
+        } else {
+          ctx.drawImage(videoRef.current, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
+        }
         const photoData = canvas.toDataURL("image/png");
         collectedPhotos.push(photoData);
         setCapturedPhotos([...collectedPhotos]); // Update UI
@@ -197,7 +233,15 @@ const Capture = () => {
       const ctx = canvas.getContext("2d");
       
       if (ctx) {
-        ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
+        // Mirror the image if mirror mode is enabled
+        if (mirrorMode) {
+          ctx.save();
+          ctx.scale(-1, 1);
+          ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, -sourceWidth, 0, sourceWidth, sourceHeight);
+          ctx.restore();
+        } else {
+          ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
+        }
         uploadedPhotos.push(canvas.toDataURL("image/png"));
       }
     }
@@ -264,7 +308,7 @@ const Capture = () => {
               autoPlay
               playsInline
               muted
-              className={`w-full h-full object-cover ${getFilterClass()}`}
+              className={`w-full h-full object-cover ${getFilterClass()} ${mirrorMode ? 'scale-x-[-1]' : ''}`}
             />
             
             {/* Countdown overlay */}
@@ -278,8 +322,27 @@ const Capture = () => {
 
             {/* Camera controls overlay */}
             <div className="absolute top-4 right-4 flex gap-2">
-              <Button variant="secondary" size="icon" className="rounded-full bg-white/90">
-                <Camera className="w-5 h-5" />
+              <Button 
+                variant="secondary" 
+                size="icon" 
+                className="rounded-full bg-white/90 hover:bg-white"
+                onClick={() => setMirrorMode(!mirrorMode)}
+                title="Toggle Mirror Mode"
+              >
+                <FlipHorizontal className="w-5 h-5" />
+              </Button>
+              <Button 
+                variant="secondary" 
+                size="icon" 
+                className={`rounded-full ${flashEnabled ? 'bg-yellow-400 hover:bg-yellow-500' : 'bg-white/90 hover:bg-white'}`}
+                onClick={() => setFlashEnabled(!flashEnabled)}
+                title="Toggle Flash"
+              >
+                {flashEnabled ? (
+                  <Flashlight className="w-5 h-5" />
+                ) : (
+                  <FlashlightOff className="w-5 h-5" />
+                )}
               </Button>
             </div>
           </div>
