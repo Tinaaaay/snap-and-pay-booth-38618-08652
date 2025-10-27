@@ -1,15 +1,8 @@
 import { useRef, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Download, RotateCcw, Home, Printer, Share2, Mail, MessageCircle } from "lucide-react";
+import { Download, RotateCcw, Home, Printer, Mail } from "lucide-react";
 import { toast } from "sonner";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
 
 const DownloadPage = () => {
   const navigate = useNavigate();
@@ -208,75 +201,56 @@ const DownloadPage = () => {
         canvasRef.current?.toBlob((b) => {
           if (b) resolve(b);
           else reject(new Error("Failed to create blob"));
-        }, "image/png");
+        }, "image/png", 1.0);
       });
+
+      // For iOS Safari compatibility
+      const userAgent = navigator.userAgent.toLowerCase();
+      const isIOS = /iphone|ipad|ipod/.test(userAgent);
+      
+      if (isIOS && navigator.share) {
+        // Use native share on iOS for better compatibility
+        try {
+          const file = new File([blob], `kodasnap-${Date.now()}.png`, { type: "image/png" });
+          await navigator.share({
+            files: [file],
+            title: "KodaSnap Photo Strip"
+          });
+          toast.success("Photo shared successfully!");
+          return;
+        } catch (error: any) {
+          if (error.name === 'AbortError') {
+            return;
+          }
+          // Continue to standard download if share fails
+        }
+      }
 
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `kodasnap-${Date.now()}.png`;
-      
-      // Force download on mobile
-      link.setAttribute('download', `kodasnap-${Date.now()}.png`);
+      const filename = `kodasnap-${Date.now()}.png`;
+      link.download = filename;
+      link.setAttribute('download', filename);
       link.style.display = 'none';
       
       document.body.appendChild(link);
+      
+      // Trigger download
       link.click();
       
       // Cleanup
       setTimeout(() => {
-        document.body.removeChild(link);
+        if (document.body.contains(link)) {
+          document.body.removeChild(link);
+        }
         URL.revokeObjectURL(url);
       }, 100);
       
       toast.success("Photo downloaded successfully!");
     } catch (error) {
       console.error("Download error:", error);
-      toast.error("Failed to download photo");
-    }
-  };
-
-  const handleShare = async () => {
-    if (!canvasRef.current) return;
-
-    try {
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvasRef.current?.toBlob((b) => {
-          if (b) resolve(b);
-          else reject(new Error("Failed to create blob"));
-        }, "image/png");
-      });
-
-      const file = new File([blob], `kodasnap-${Date.now()}.png`, { type: "image/png" });
-
-      // Check if Web Share API is available
-      if (navigator.share) {
-        try {
-          // Try sharing with files
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({
-              files: [file],
-              title: "KodaSnap Photo Strip",
-              text: "Check out my KodaSnap photo strip! 📸"
-            });
-            toast.success("Photo shared successfully!");
-          } else {
-            // Share without files (will show share options but without file)
-            toast.error("File sharing not supported on this browser. Please use Download instead.");
-          }
-        } catch (error: any) {
-          if (error.name === 'AbortError') {
-            // User cancelled - this is normal
-            return;
-          }
-          throw error;
-        }
-      } else {
-        toast.error("Sharing not supported on this browser. Please use Download button instead.");
-      }
-    } catch (error: any) {
-      console.error("Share error:", error);
-      toast.error("Failed to share. Please use Download button.");
+      toast.error("Failed to download photo. Please try again.");
     }
   };
 
@@ -293,130 +267,129 @@ const DownloadPage = () => {
       
       const file = new File([blob], `kodasnap-${Date.now()}.png`, { type: "image/png" });
       
-      // Try to share via native share (will show email apps on mobile)
-      if (navigator.share) {
+      // Try native share first (works on mobile with Gmail/email apps)
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({
-              files: [file],
-              title: "KodaSnap Photo Strip",
-              text: "Check out my KodaSnap photo strip! 📸"
-            });
-            return;
-          }
+          await navigator.share({
+            files: [file],
+            title: "KodaSnap Photo Strip",
+            text: "Check out my KodaSnap photo strip! 📸"
+          });
+          toast.success("Opening email app...");
+          return;
         } catch (error: any) {
           if (error.name === 'AbortError') {
             return;
           }
+          // Continue to fallback if share fails
         }
       }
       
-      // Fallback: Auto-download and open email
+      // Desktop fallback: Download file and open mailto
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
       link.download = `kodasnap-${Date.now()}.png`;
+      link.style.display = 'none';
+      document.body.appendChild(link);
       link.click();
-      URL.revokeObjectURL(url);
       
-      const subject = encodeURIComponent("Check out my KodaSnap photo!");
-      const body = encodeURIComponent("I created this photo strip with KodaSnap! 📸\n\nPlease find the attached image.");
       setTimeout(() => {
-        window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
+      
+      // Open email client
+      const subject = encodeURIComponent("Check out my KodaSnap photo!");
+      const body = encodeURIComponent("I created this photo strip with KodaSnap! 📸\n\nPlease attach the downloaded image.");
+      
+      setTimeout(() => {
+        window.location.href = `mailto:?subject=${subject}&body=${body}`;
       }, 500);
       
-      toast.success("Photo downloaded! Email app opening...");
+      toast.success("Photo downloaded! Opening email...");
     } catch (error: any) {
       console.error("Email share error:", error);
       toast.error("Failed to share via email");
     }
   };
 
-  const handleMessengerShare = async () => {
-    if (!canvasRef.current) return;
-
-    try {
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvasRef.current?.toBlob((b) => {
-          if (b) resolve(b);
-          else reject(new Error("Failed to create blob"));
-        }, "image/png");
-      });
-
-      const file = new File([blob], `kodasnap-${Date.now()}.png`, { type: "image/png" });
-
-      // Use native share which will show all available messaging apps
-      if (navigator.share) {
-        try {
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({
-              files: [file],
-              title: "KodaSnap Photo Strip",
-              text: "Check out my photo strip! 📸"
-            });
-            toast.success("Opening share options...");
-            return;
-          }
-        } catch (error: any) {
-          if (error.name === 'AbortError') {
-            return;
-          }
-        }
-      }
-      
-      // Fallback if share not available
-      toast.error("Sharing not supported. Please use Download and share manually via Messenger.");
-    } catch (error: any) {
-      console.error("Messenger share error:", error);
-      toast.error("Failed to share");
-    }
-  };
 
   const handlePrint = () => {
     if (!canvasRef.current) return;
 
     try {
-      const dataUrl = canvasRef.current.toDataURL("image/png");
-      const printWindow = window.open("", "_blank");
-      if (printWindow) {
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>Print Photo Strip</title>
-              <style>
-                body {
-                  margin: 0;
-                  display: flex;
-                  justify-content: center;
-                  align-items: center;
-                  min-height: 100vh;
-                }
-                img {
-                  max-width: 100%;
-                  height: auto;
-                }
-                @media print {
+      const dataUrl = canvasRef.current.toDataURL("image/png", 1.0);
+      
+      // Check if on mobile
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      
+      if (isMobile) {
+        // On mobile, download first then show print instructions
+        const link = document.createElement("a");
+        link.href = dataUrl;
+        link.download = `kodasnap-print-${Date.now()}.png`;
+        link.click();
+        toast.success("Downloaded! Open the image and use your device's print option.");
+      } else {
+        // Desktop print
+        const printWindow = window.open("", "_blank");
+        if (printWindow) {
+          printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <title>Print Photo Strip - KodaSnap</title>
+                <style>
+                  * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                  }
                   body {
                     margin: 0;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 100vh;
+                    background: #f5f5f5;
                   }
                   img {
                     max-width: 100%;
-                    page-break-inside: avoid;
+                    height: auto;
+                    display: block;
                   }
-                }
-              </style>
-            </head>
-            <body>
-              <img src="${dataUrl}" onload="window.print(); window.close();" />
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-        toast.success("Opening print dialog...");
+                  @media print {
+                    body {
+                      background: white;
+                      margin: 0;
+                      padding: 0;
+                    }
+                    img {
+                      max-width: 100%;
+                      height: auto;
+                      page-break-inside: avoid;
+                    }
+                    @page {
+                      margin: 0.5cm;
+                    }
+                  }
+                </style>
+              </head>
+              <body>
+                <img src="${dataUrl}" onload="setTimeout(() => { window.print(); }, 250);" alt="KodaSnap Photo Strip" />
+              </body>
+            </html>
+          `);
+          printWindow.document.close();
+          toast.success("Opening print dialog...");
+        } else {
+          toast.error("Please allow pop-ups to print");
+        }
       }
     } catch (error) {
       console.error("Print error:", error);
-      toast.error("Failed to print photo");
+      toast.error("Failed to print. Try downloading instead.");
     }
   };
 
@@ -462,13 +435,13 @@ const DownloadPage = () => {
           {/* Info banner */}
           <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 mb-6 max-w-2xl mx-auto">
             <div className="flex items-start gap-3">
-              <Share2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+              <Mail className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-semibold text-foreground mb-1">
                   Save & Share Your Photo Strip
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Download to save, or use Share to send via Bluetooth, Messenger, Email, WhatsApp, and more!
+                  Download to save locally, or use Email to share your photo strip instantly!
                 </p>
               </div>
             </div>
@@ -485,33 +458,14 @@ const DownloadPage = () => {
               Download
             </Button>
             
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  size="lg"
-                  variant="default"
-                  className="w-full sm:flex-1 py-5 sm:py-6 rounded-full shadow-glow hover:shadow-soft transition-all gap-2"
-                >
-                  <Share2 className="w-5 h-5" />
-                  Share
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-56">
-                <DropdownMenuItem onClick={handleShare} className="cursor-pointer py-3">
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Share to Apps (Bluetooth, etc.)
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleEmailShare} className="cursor-pointer py-3">
-                  <Mail className="w-4 h-4 mr-2" />
-                  Share via Email
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleMessengerShare} className="cursor-pointer py-3">
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Share via Messenger
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button
+              size="lg"
+              onClick={handleEmailShare}
+              className="w-full sm:flex-1 py-5 sm:py-6 rounded-full shadow-glow hover:shadow-soft transition-all gap-2"
+            >
+              <Mail className="w-5 h-5" />
+              Share via Email
+            </Button>
 
             <Button
               size="lg"
