@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Camera, ArrowLeft, Upload, FlipHorizontal, Flashlight, FlashlightOff } from "lucide-react";
+import { Camera, ArrowLeft, Upload, FlipHorizontal } from "lucide-react";
 import { toast } from "sonner";
 
 const Capture = () => {
@@ -17,8 +17,6 @@ const Capture = () => {
   const [uploadMode, setUploadMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mirrorMode, setMirrorMode] = useState(true);
-  const [flashEnabled, setFlashEnabled] = useState(false);
-  const [showFlash, setShowFlash] = useState(false);
 
   const filters = ["No Filter", "B&W", "Sepia", "Vintage", "Soft", "Noir", "Vivid"];
 
@@ -29,23 +27,6 @@ const Capture = () => {
     };
   }, []);
 
-  // Handle flash toggle
-  useEffect(() => {
-    if (stream) {
-      const videoTrack = stream.getVideoTracks()[0];
-      if (videoTrack && 'torch' in videoTrack.getCapabilities()) {
-        videoTrack.applyConstraints({
-          // @ts-ignore - torch is not in standard types yet
-          advanced: [{ torch: flashEnabled }]
-        }).catch(() => {
-          toast.error("Flash not supported on this device");
-        });
-      } else if (flashEnabled) {
-        toast.error("Flash not supported on this device");
-        setFlashEnabled(false);
-      }
-    }
-  }, [flashEnabled, stream]);
 
   const startCamera = async () => {
     try {
@@ -73,15 +54,8 @@ const Capture = () => {
     }
   };
 
-  const capturePhoto = async () => {
+  const capturePhoto = () => {
     if (!videoRef.current) return;
-
-    // Trigger flash effect if enabled
-    if (flashEnabled) {
-      setShowFlash(true);
-      await new Promise(resolve => setTimeout(resolve, 150));
-      setShowFlash(false);
-    }
 
     const canvas = document.createElement("canvas");
     const targetAspect = 2.5; // 400:160 ratio
@@ -133,13 +107,6 @@ const Capture = () => {
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
       setCountdown(null);
-      
-      // Trigger flash effect if enabled
-      if (flashEnabled) {
-        setShowFlash(true);
-        await new Promise(resolve => setTimeout(resolve, 150));
-        setShowFlash(false);
-      }
       
       // Capture photo and collect it
       if (!videoRef.current) continue;
@@ -326,11 +293,6 @@ const Capture = () => {
               className={`w-full h-full object-cover ${getFilterClass()} ${mirrorMode ? 'scale-x-[-1]' : ''}`}
             />
             
-            {/* Flash overlay */}
-            {showFlash && (
-              <div className="absolute inset-0 bg-white animate-pulse" />
-            )}
-            
             {/* Countdown overlay */}
             {countdown && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/50">
@@ -350,19 +312,6 @@ const Capture = () => {
                 title="Toggle Mirror Mode"
               >
                 <FlipHorizontal className="w-5 h-5" />
-              </Button>
-              <Button 
-                variant="secondary" 
-                size="icon" 
-                className={`rounded-full ${flashEnabled ? 'bg-yellow-400 hover:bg-yellow-500' : 'bg-white/90 hover:bg-white'}`}
-                onClick={() => setFlashEnabled(!flashEnabled)}
-                title="Toggle Flash"
-              >
-                {flashEnabled ? (
-                  <Flashlight className="w-5 h-5" />
-                ) : (
-                  <FlashlightOff className="w-5 h-5" />
-                )}
               </Button>
             </div>
           </div>

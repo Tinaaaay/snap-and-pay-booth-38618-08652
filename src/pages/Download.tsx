@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Download, RotateCcw, Home, Printer, Mail } from "lucide-react";
+import { Download, RotateCcw, Home, Printer } from "lucide-react";
 import { toast } from "sonner";
 
 const DownloadPage = () => {
@@ -206,38 +206,45 @@ const DownloadPage = () => {
 
       const filename = `kodasnap-${Date.now()}.png`;
       const file = new File([blob], filename, { type: "image/png" });
-      
-      // Try Web Share API first (works on mobile)
+
+      const ua = navigator.userAgent;
+      const isIOS = /iPhone|iPad|iPod/i.test(ua);
+
+      // 1) Prefer Web Share API with file attachment (best on mobile)
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
-          await navigator.share({
-            files: [file],
-            title: "KodaSnap Photo Strip"
-          });
-          toast.success("Photo shared successfully!");
+          await navigator.share({ files: [file], title: "KodaSnap Photo Strip" });
+          toast.success("Use 'Save to Files' or 'Save Image' to store it.");
           return;
-        } catch (error: any) {
-          if (error.name === 'AbortError') {
-            return;
-          }
-          // Continue to download if share was cancelled or failed
+        } catch (err: any) {
+          if (err?.name === 'AbortError') return;
+          // fall through to other strategies
         }
       }
 
-      // Fallback: Standard download for desktop/unsupported browsers
+      // 2) iOS fallback: open data URL in a new tab (user can long-press › Save Image)
+      if (isIOS && canvasRef.current) {
+        const dataUrl = canvasRef.current.toDataURL("image/png", 1.0);
+        const opened = window.open(dataUrl, "_blank");
+        if (!opened) {
+          // As a last resort, navigate current tab
+          window.location.href = dataUrl;
+        }
+        toast.success("Image opened. Tap and hold to Save Image.");
+        return;
+      }
+
+      // 3) Standard download for Android/desktop
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
       link.download = filename;
       document.body.appendChild(link);
       link.click();
-      
-      // Cleanup after a delay
       setTimeout(() => {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
       }, 1000);
-      
       toast.success("Photo downloaded successfully!");
     } catch (error) {
       console.error("Download error:", error);
@@ -245,62 +252,6 @@ const DownloadPage = () => {
     }
   };
 
-  const handleEmailShare = async () => {
-    if (!canvasRef.current) return;
-
-    try {
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvasRef.current?.toBlob((b) => {
-          if (b) resolve(b);
-          else reject(new Error("Failed to create blob"));
-        }, "image/png", 1.0);
-      });
-      
-      const filename = `kodasnap-${Date.now()}.png`;
-      const file = new File([blob], filename, { type: "image/png" });
-      
-      // Use Web Share API (opens Gmail/email apps directly with attachment)
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({
-            files: [file],
-            title: "KodaSnap Photo Strip",
-            text: "Check out my KodaSnap photo strip! 📸"
-          });
-          toast.success("Photo shared via email!");
-          return;
-        } catch (error: any) {
-          if (error.name === 'AbortError') {
-            return; // User cancelled
-          }
-          throw error;
-        }
-      }
-      
-      // Fallback for desktop: Download and open mailto
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      
-      setTimeout(() => {
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        
-        // Open email client
-        const subject = encodeURIComponent("Check out my KodaSnap photo!");
-        const body = encodeURIComponent("I created this photo strip with KodaSnap! 📸\n\nThe photo has been downloaded - please attach it to this email.");
-        window.location.href = `mailto:?subject=${subject}&body=${body}`;
-      }, 500);
-      
-      toast.success("Photo downloaded! Opening email client...");
-    } catch (error: any) {
-      console.error("Email share error:", error);
-      toast.error("Failed to share via email. Try the Download button instead.");
-    }
-  };
 
 
   const handlePrint = async () => {
@@ -419,13 +370,13 @@ const DownloadPage = () => {
           {/* Info banner */}
           <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 mb-6 max-w-2xl mx-auto">
             <div className="flex items-start gap-3">
-              <Mail className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+              <Download className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-semibold text-foreground mb-1">
-                  Share Your Photo Strip
+                  Save Your Photo Strip
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Tap "Share via Email" to open Gmail (or your email app) with your photo automatically attached!
+                  Tap Download. On iPhone, the share sheet will open so you can Save to Files/Photos. On Android/Windows, it will download directly.
                 </p>
               </div>
             </div>
@@ -442,15 +393,6 @@ const DownloadPage = () => {
               Download
             </Button>
             
-            <Button
-              size="lg"
-              onClick={handleEmailShare}
-              className="w-full sm:flex-1 py-5 sm:py-6 rounded-full shadow-glow hover:shadow-soft transition-all gap-2"
-            >
-              <Mail className="w-5 h-5" />
-              Share via Email
-            </Button>
-
             <Button
               size="lg"
               variant="outline"
