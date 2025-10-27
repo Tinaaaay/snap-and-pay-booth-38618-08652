@@ -18,6 +18,7 @@ const Capture = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mirrorMode, setMirrorMode] = useState(true);
   const [flashEnabled, setFlashEnabled] = useState(false);
+  const [showFlash, setShowFlash] = useState(false);
 
   const filters = ["No Filter", "B&W", "Sepia", "Vintage", "Soft", "Noir", "Vivid"];
 
@@ -72,8 +73,15 @@ const Capture = () => {
     }
   };
 
-  const capturePhoto = () => {
+  const capturePhoto = async () => {
     if (!videoRef.current) return;
+
+    // Trigger flash effect if enabled
+    if (flashEnabled) {
+      setShowFlash(true);
+      await new Promise(resolve => setTimeout(resolve, 150));
+      setShowFlash(false);
+    }
 
     const canvas = document.createElement("canvas");
     const targetAspect = 2.5; // 400:160 ratio
@@ -125,6 +133,13 @@ const Capture = () => {
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
       setCountdown(null);
+      
+      // Trigger flash effect if enabled
+      if (flashEnabled) {
+        setShowFlash(true);
+        await new Promise(resolve => setTimeout(resolve, 150));
+        setShowFlash(false);
+      }
       
       // Capture photo and collect it
       if (!videoRef.current) continue;
@@ -310,6 +325,11 @@ const Capture = () => {
               muted
               className={`w-full h-full object-cover ${getFilterClass()} ${mirrorMode ? 'scale-x-[-1]' : ''}`}
             />
+            
+            {/* Flash overlay */}
+            {showFlash && (
+              <div className="absolute inset-0 bg-white animate-pulse" />
+            )}
             
             {/* Countdown overlay */}
             {countdown && (

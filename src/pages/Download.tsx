@@ -204,14 +204,12 @@ const DownloadPage = () => {
         }, "image/png", 1.0);
       });
 
-      // For iOS Safari compatibility
-      const userAgent = navigator.userAgent.toLowerCase();
-      const isIOS = /iphone|ipad|ipod/.test(userAgent);
+      const filename = `kodasnap-${Date.now()}.png`;
+      const file = new File([blob], filename, { type: "image/png" });
       
-      if (isIOS && navigator.share) {
-        // Use native share on iOS for better compatibility
+      // Try Web Share API first (works on mobile)
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
-          const file = new File([blob], `kodasnap-${Date.now()}.png`, { type: "image/png" });
           await navigator.share({
             files: [file],
             title: "KodaSnap Photo Strip"
@@ -222,30 +220,23 @@ const DownloadPage = () => {
           if (error.name === 'AbortError') {
             return;
           }
-          // Continue to standard download if share fails
+          // Continue to download if share was cancelled or failed
         }
       }
 
+      // Fallback: Standard download for desktop/unsupported browsers
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      const filename = `kodasnap-${Date.now()}.png`;
       link.download = filename;
-      link.setAttribute('download', filename);
-      link.style.display = 'none';
-      
       document.body.appendChild(link);
-      
-      // Trigger download
       link.click();
       
-      // Cleanup
+      // Cleanup after a delay
       setTimeout(() => {
-        if (document.body.contains(link)) {
-          document.body.removeChild(link);
-        }
+        document.body.removeChild(link);
         URL.revokeObjectURL(url);
-      }, 100);
+      }, 1000);
       
       toast.success("Photo downloaded successfully!");
     } catch (error) {
@@ -262,12 +253,13 @@ const DownloadPage = () => {
         canvasRef.current?.toBlob((b) => {
           if (b) resolve(b);
           else reject(new Error("Failed to create blob"));
-        }, "image/png");
+        }, "image/png", 1.0);
       });
       
-      const file = new File([blob], `kodasnap-${Date.now()}.png`, { type: "image/png" });
+      const filename = `kodasnap-${Date.now()}.png`;
+      const file = new File([blob], filename, { type: "image/png" });
       
-      // Try native share first (works on mobile with Gmail/email apps)
+      // Use Web Share API (opens Gmail/email apps directly with attachment)
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({
@@ -275,65 +267,75 @@ const DownloadPage = () => {
             title: "KodaSnap Photo Strip",
             text: "Check out my KodaSnap photo strip! 📸"
           });
-          toast.success("Opening email app...");
+          toast.success("Photo shared via email!");
           return;
         } catch (error: any) {
           if (error.name === 'AbortError') {
-            return;
+            return; // User cancelled
           }
-          // Continue to fallback if share fails
+          throw error;
         }
       }
       
-      // Desktop fallback: Download file and open mailto
+      // Fallback for desktop: Download and open mailto
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `kodasnap-${Date.now()}.png`;
-      link.style.display = 'none';
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       
       setTimeout(() => {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-      }, 100);
-      
-      // Open email client
-      const subject = encodeURIComponent("Check out my KodaSnap photo!");
-      const body = encodeURIComponent("I created this photo strip with KodaSnap! 📸\n\nPlease attach the downloaded image.");
-      
-      setTimeout(() => {
+        
+        // Open email client
+        const subject = encodeURIComponent("Check out my KodaSnap photo!");
+        const body = encodeURIComponent("I created this photo strip with KodaSnap! 📸\n\nThe photo has been downloaded - please attach it to this email.");
         window.location.href = `mailto:?subject=${subject}&body=${body}`;
       }, 500);
       
-      toast.success("Photo downloaded! Opening email...");
+      toast.success("Photo downloaded! Opening email client...");
     } catch (error: any) {
       console.error("Email share error:", error);
-      toast.error("Failed to share via email");
+      toast.error("Failed to share via email. Try the Download button instead.");
     }
   };
 
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     if (!canvasRef.current) return;
 
     try {
-      const dataUrl = canvasRef.current.toDataURL("image/png", 1.0);
-      
-      // Check if on mobile
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       
       if (isMobile) {
-        // On mobile, download first then show print instructions
+        // Mobile: Convert to blob and download
+        const blob = await new Promise<Blob>((resolve, reject) => {
+          canvasRef.current?.toBlob((b) => {
+            if (b) resolve(b);
+            else reject(new Error("Failed to create blob"));
+          }, "image/png", 1.0);
+        });
+        
+        const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
-        link.href = dataUrl;
+        link.href = url;
         link.download = `kodasnap-print-${Date.now()}.png`;
+        document.body.appendChild(link);
         link.click();
+        
+        setTimeout(() => {
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }, 1000);
+        
         toast.success("Downloaded! Open the image and use your device's print option.");
       } else {
-        // Desktop print
+        // Desktop: Open print dialog
+        const dataUrl = canvasRef.current.toDataURL("image/png", 1.0);
         const printWindow = window.open("", "_blank");
+        
         if (printWindow) {
           printWindow.document.write(`
             <!DOCTYPE html>
@@ -341,11 +343,7 @@ const DownloadPage = () => {
               <head>
                 <title>Print Photo Strip - KodaSnap</title>
                 <style>
-                  * {
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                  }
+                  * { margin: 0; padding: 0; box-sizing: border-box; }
                   body {
                     margin: 0;
                     display: flex;
@@ -354,30 +352,16 @@ const DownloadPage = () => {
                     min-height: 100vh;
                     background: #f5f5f5;
                   }
-                  img {
-                    max-width: 100%;
-                    height: auto;
-                    display: block;
-                  }
+                  img { max-width: 100%; height: auto; display: block; }
                   @media print {
-                    body {
-                      background: white;
-                      margin: 0;
-                      padding: 0;
-                    }
-                    img {
-                      max-width: 100%;
-                      height: auto;
-                      page-break-inside: avoid;
-                    }
-                    @page {
-                      margin: 0.5cm;
-                    }
+                    body { background: white; margin: 0; padding: 0; }
+                    img { max-width: 100%; height: auto; page-break-inside: avoid; }
+                    @page { margin: 0.5cm; }
                   }
                 </style>
               </head>
               <body>
-                <img src="${dataUrl}" onload="setTimeout(() => { window.print(); }, 250);" alt="KodaSnap Photo Strip" />
+                <img src="${dataUrl}" onload="setTimeout(() => window.print(), 250);" alt="KodaSnap Photo Strip" />
               </body>
             </html>
           `);
@@ -438,10 +422,10 @@ const DownloadPage = () => {
               <Mail className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-semibold text-foreground mb-1">
-                  Save & Share Your Photo Strip
+                  Share Your Photo Strip
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Download to save locally, or use Email to share your photo strip instantly!
+                  Tap "Share via Email" to open Gmail (or your email app) with your photo automatically attached!
                 </p>
               </div>
             </div>
