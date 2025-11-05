@@ -8,6 +8,7 @@ const Capture = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const photoCount = location.state?.photoCount || 4;
+  const templateNumber = location.state?.templateNumber || 1;
   const videoRef = useRef<HTMLVideoElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [selectedFilter, setSelectedFilter] = useState("No Filter");
@@ -162,7 +163,7 @@ const Capture = () => {
     // Navigate to customize with all collected photos
     setTimeout(() => {
       stopCamera();
-      navigate("/customize", { state: { photos: collectedPhotos } });
+      navigate("/customize", { state: { photos: collectedPhotos, templateNumber } });
     }, 1000);
   };
 
@@ -237,7 +238,7 @@ const Capture = () => {
       if (uploadedPhotos.length === photoCount) {
         setTimeout(() => {
           stopCamera();
-          navigate("/customize", { state: { photos: uploadedPhotos } });
+          navigate("/customize", { state: { photos: uploadedPhotos, templateNumber } });
         }, 1000);
       }
     }
