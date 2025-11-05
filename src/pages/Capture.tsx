@@ -61,8 +61,8 @@ const Capture = () => {
     const targetAspect = 2.5; // 400:160 ratio
     const videoAspect = videoRef.current.videoWidth / videoRef.current.videoHeight;
     
-    // Calculate crop dimensions with slight zoom (1.15x) for better framing
-    const zoomFactor = 1.15;
+    // Calculate crop dimensions with wider range (0.85x) for full face capture
+    const zoomFactor = 0.85;
     let sourceWidth, sourceHeight, sourceX, sourceY;
     if (videoAspect > targetAspect) {
       // Video is wider - crop sides
@@ -116,8 +116,8 @@ const Capture = () => {
       const targetAspect = 2.5; // 400:160 ratio
       const videoAspect = videoRef.current.videoWidth / videoRef.current.videoHeight;
       
-      // Calculate crop dimensions with slight zoom (1.15x) for better framing
-      const zoomFactor = 1.15;
+      // Calculate crop dimensions with wider range (0.85x) for full face capture
+      const zoomFactor = 0.85;
       let sourceWidth, sourceHeight, sourceX, sourceY;
       if (videoAspect > targetAspect) {
         // Video is wider - crop sides
