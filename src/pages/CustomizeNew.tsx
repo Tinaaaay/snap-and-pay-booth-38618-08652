@@ -447,14 +447,14 @@ const CustomizeNew = () => {
               <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6">
                 <h3 className="font-semibold text-foreground mb-4">Layout</h3>
                 {(() => {
-                  // Get current frame number (1-30) - Templates 1,3,5 only allow strip
+                  // Determine if grid is allowed only for Templates 2, 4, 6
                   const currentFrameNum = frameImage ? designedFrames.findIndex(f => f.image === frameImage) + 1 : 0;
-                  const stripOnlyFrames = [1, 3, 5]; // Templates that only allow strip layout
-                  const isStripOnly = stripOnlyFrames.includes(currentFrameNum);
+                  const gridAllowedFrames = [2, 4, 6];
+                  const isGridAllowed = gridAllowedFrames.includes(currentFrameNum);
                   
                   return (
                     <>
-                      <div className={isStripOnly ? "grid grid-cols-1 gap-3" : "grid grid-cols-2 gap-3"}>
+                      <div className={isGridAllowed ? "grid grid-cols-2 gap-3" : "grid grid-cols-1 gap-3"}>
                         <Button
                           variant={layout === "vertical" ? "default" : "outline"}
                           onClick={() => setLayout("vertical")}
@@ -463,7 +463,7 @@ const CustomizeNew = () => {
                           <LayoutList className="w-5 h-5" />
                           <span>Strip</span>
                         </Button>
-                        {!isStripOnly && (
+                        {isGridAllowed && (
                           <Button
                             variant={layout === "grid" ? "default" : "outline"}
                             onClick={() => setLayout("grid")}
@@ -474,7 +474,7 @@ const CustomizeNew = () => {
                           </Button>
                         )}
                       </div>
-                      {isStripOnly && (
+                      {!isGridAllowed && (
                         <p className="text-xs text-muted-foreground mt-2">
                           This template only supports strip layout
                         </p>
@@ -496,6 +496,7 @@ const CustomizeNew = () => {
                       onClick={() => {
                         setFrameColor(color.value);
                         setFrameImage(null);
+                        setLayout("vertical");
                       }}
                       className={`h-12 rounded-lg transition-all border-2 ${
                         frameColor === color.value && !frameImage
@@ -515,6 +516,7 @@ const CustomizeNew = () => {
                       if (checked) {
                         setFrameColor(customColor);
                         setFrameImage(null);
+                        setLayout("vertical");
                       }
                     }}
                   />
@@ -531,6 +533,7 @@ const CustomizeNew = () => {
                       setCustomColor(e.target.value);
                       setFrameColor(e.target.value);
                       setFrameImage(null);
+                      setLayout("vertical");
                     }}
                     className="w-20 h-10 cursor-pointer"
                   />
@@ -551,6 +554,11 @@ const CustomizeNew = () => {
                       key={frame.name}
                       onClick={() => {
                         setFrameImage(frame.image);
+                        const selectedIndex = designedFrames.findIndex((f) => f.image === frame.image) + 1;
+                        const gridAllowed = [2, 4, 6].includes(selectedIndex);
+                        if (!gridAllowed && layout === "grid") {
+                          setLayout("vertical");
+                        }
                       }}
                       className={`h-20 rounded-lg transition-all border-2 overflow-hidden ${
                         frameImage === frame.image

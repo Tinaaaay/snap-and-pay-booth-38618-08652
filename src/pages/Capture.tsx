@@ -33,9 +33,8 @@ const Capture = () => {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { 
           facingMode: "user", 
-          width: { ideal: 1920 }, 
-          height: { ideal: 1080 },
-          aspectRatio: { ideal: 2.5 }
+          width: { ideal: 1280 }, 
+          height: { ideal: 720 }
         },
         audio: false,
       });
@@ -61,8 +60,8 @@ const Capture = () => {
     const targetAspect = 2.5; // 400:160 ratio
     const videoAspect = videoRef.current.videoWidth / videoRef.current.videoHeight;
     
-    // Calculate crop dimensions with wider range (0.85x) for full face capture
-    const zoomFactor = 0.85;
+    // Calculate crop dimensions with no extra zoom (1.0x) for wider range
+    const zoomFactor = 1.0;
     let sourceWidth, sourceHeight, sourceX, sourceY;
     if (videoAspect > targetAspect) {
       // Video is wider - crop sides
@@ -116,8 +115,8 @@ const Capture = () => {
       const targetAspect = 2.5; // 400:160 ratio
       const videoAspect = videoRef.current.videoWidth / videoRef.current.videoHeight;
       
-      // Calculate crop dimensions with wider range (0.85x) for full face capture
-      const zoomFactor = 0.85;
+      // Calculate crop dimensions with no extra zoom (1.0x) for wider range
+      const zoomFactor = 1.0;
       let sourceWidth, sourceHeight, sourceX, sourceY;
       if (videoAspect > targetAspect) {
         // Video is wider - crop sides
