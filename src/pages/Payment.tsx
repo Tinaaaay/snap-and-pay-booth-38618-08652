@@ -57,7 +57,9 @@ const Payment = () => {
                 className="w-full h-full object-contain"
               />
             </div>
-            <p className="text-center font-bold text-xl sm:text-2xl text-foreground mt-4">₱50.00</p>
+            <p className="text-center font-semibold text-base sm:text-lg text-muted-foreground mt-4">
+              Please ask the attendant for the payment amount
+            </p>
           </div>
 
           {/* Payment instructions */}

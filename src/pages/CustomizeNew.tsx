@@ -357,12 +357,12 @@ const CustomizeNew = () => {
                     {photos.map((photo: string, index: number) => (
                       <div
                         key={index}
-                        className="relative overflow-hidden rounded-xl bg-white"
+                        className="relative overflow-hidden rounded-xl bg-white flex items-center justify-center"
                       >
                         <img
                           src={photo}
                           alt={`Photo ${index + 1}`}
-                          className={`w-full object-cover ${
+                          className={`w-full object-cover object-center ${
                             layout === "vertical" ? "h-40" : "h-32"
                           }`}
                         />
@@ -446,24 +446,42 @@ const CustomizeNew = () => {
               {/* Layout */}
               <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6">
                 <h3 className="font-semibold text-foreground mb-4">Layout</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button
-                    variant={layout === "vertical" ? "default" : "outline"}
-                    onClick={() => setLayout("vertical")}
-                    className="gap-2 h-auto py-4"
-                  >
-                    <LayoutList className="w-5 h-5" />
-                    <span>Vertical</span>
-                  </Button>
-                  <Button
-                    variant={layout === "grid" ? "default" : "outline"}
-                    onClick={() => setLayout("grid")}
-                    className="gap-2 h-auto py-4"
-                  >
-                    <LayoutGrid className="w-5 h-5" />
-                    <span>Grid</span>
-                  </Button>
-                </div>
+                {(() => {
+                  // Get current frame number (1-30) - Templates 1,3,5 only allow strip
+                  const currentFrameNum = frameImage ? designedFrames.findIndex(f => f.image === frameImage) + 1 : 0;
+                  const stripOnlyFrames = [1, 3, 5]; // Templates that only allow strip layout
+                  const isStripOnly = stripOnlyFrames.includes(currentFrameNum);
+                  
+                  return (
+                    <>
+                      <div className={isStripOnly ? "grid grid-cols-1 gap-3" : "grid grid-cols-2 gap-3"}>
+                        <Button
+                          variant={layout === "vertical" ? "default" : "outline"}
+                          onClick={() => setLayout("vertical")}
+                          className="gap-2 h-auto py-4"
+                        >
+                          <LayoutList className="w-5 h-5" />
+                          <span>Strip</span>
+                        </Button>
+                        {!isStripOnly && (
+                          <Button
+                            variant={layout === "grid" ? "default" : "outline"}
+                            onClick={() => setLayout("grid")}
+                            className="gap-2 h-auto py-4"
+                          >
+                            <LayoutGrid className="w-5 h-5" />
+                            <span>Grid</span>
+                          </Button>
+                        )}
+                      </div>
+                      {isStripOnly && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          This template only supports strip layout
+                        </p>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Frame Color */}

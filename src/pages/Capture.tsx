@@ -33,9 +33,9 @@ const Capture = () => {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { 
           facingMode: "user", 
-          width: { ideal: 1280 }, 
-          height: { ideal: 720 },
-          aspectRatio: { ideal: 2.5 } // Match final output aspect ratio (400:160)
+          width: { ideal: 1920 }, 
+          height: { ideal: 1080 },
+          aspectRatio: { ideal: 2.5 }
         },
         audio: false,
       });
@@ -61,19 +61,20 @@ const Capture = () => {
     const targetAspect = 2.5; // 400:160 ratio
     const videoAspect = videoRef.current.videoWidth / videoRef.current.videoHeight;
     
-    // Calculate crop dimensions to match target aspect ratio
+    // Calculate crop dimensions with slight zoom (1.15x) for better framing
+    const zoomFactor = 1.15;
     let sourceWidth, sourceHeight, sourceX, sourceY;
     if (videoAspect > targetAspect) {
       // Video is wider - crop sides
-      sourceHeight = videoRef.current.videoHeight;
+      sourceHeight = videoRef.current.videoHeight / zoomFactor;
       sourceWidth = sourceHeight * targetAspect;
       sourceX = (videoRef.current.videoWidth - sourceWidth) / 2;
-      sourceY = 0;
+      sourceY = (videoRef.current.videoHeight - sourceHeight) / 2;
     } else {
       // Video is taller - crop top/bottom
-      sourceWidth = videoRef.current.videoWidth;
+      sourceWidth = videoRef.current.videoWidth / zoomFactor;
       sourceHeight = sourceWidth / targetAspect;
-      sourceX = 0;
+      sourceX = (videoRef.current.videoWidth - sourceWidth) / 2;
       sourceY = (videoRef.current.videoHeight - sourceHeight) / 2;
     }
     
@@ -115,19 +116,20 @@ const Capture = () => {
       const targetAspect = 2.5; // 400:160 ratio
       const videoAspect = videoRef.current.videoWidth / videoRef.current.videoHeight;
       
-      // Calculate crop dimensions to match target aspect ratio
+      // Calculate crop dimensions with slight zoom (1.15x) for better framing
+      const zoomFactor = 1.15;
       let sourceWidth, sourceHeight, sourceX, sourceY;
       if (videoAspect > targetAspect) {
         // Video is wider - crop sides
-        sourceHeight = videoRef.current.videoHeight;
+        sourceHeight = videoRef.current.videoHeight / zoomFactor;
         sourceWidth = sourceHeight * targetAspect;
         sourceX = (videoRef.current.videoWidth - sourceWidth) / 2;
-        sourceY = 0;
+        sourceY = (videoRef.current.videoHeight - sourceHeight) / 2;
       } else {
         // Video is taller - crop top/bottom
-        sourceWidth = videoRef.current.videoWidth;
+        sourceWidth = videoRef.current.videoWidth / zoomFactor;
         sourceHeight = sourceWidth / targetAspect;
-        sourceX = 0;
+        sourceX = (videoRef.current.videoWidth - sourceWidth) / 2;
         sourceY = (videoRef.current.videoHeight - sourceHeight) / 2;
       }
       
