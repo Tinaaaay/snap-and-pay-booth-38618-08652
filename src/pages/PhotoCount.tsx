@@ -10,9 +10,7 @@ const PhotoCount = () => {
   const photoOptions = [1, 2, 3, 4, 5, 6];
 
   const handleContinue = () => {
-    // Map photo count to template number (1-6)
-    const templateNumber = selectedCount;
-    navigate("/capture", { state: { photoCount: selectedCount, templateNumber } });
+    navigate("/capture", { state: { photoCount: selectedCount } });
   };
 
   return (

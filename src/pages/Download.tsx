@@ -23,44 +23,20 @@ const DownloadPage = () => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Get template configuration
-    const templateNumber = customization?.templateNumber || 1;
+    // Set canvas dimensions based on layout
     const isVertical = customization?.layout === "vertical";
-    const DPI = 300; // Print resolution
-    
-    // Template sizing configurations (in inches converted to pixels at 300 DPI)
-    const templateConfigs: Record<number, any> = {
-      1: { strip: { width: 600, height: 1800, photoWidth: 540, photoHeight: 1620 } },
-      2: { 
-        strip: { width: 600, height: 1800, photoWidth: 540, photoHeight: 780 },
-        grid: { width: 1200, height: 1800, photoWidth: 840, photoHeight: 840 }
-      },
-      3: { strip: { width: 600, height: 1800, photoWidth: 540, photoHeight: 510 } },
-      4: { 
-        strip: { width: 600, height: 1800, photoWidth: 540, photoHeight: 390 },
-        grid: { width: 1200, height: 1800, photoWidth: 840, photoHeight: 840 }
-      },
-      5: { strip: { width: 600, height: 1800, photoWidth: 540, photoHeight: 300 } },
-      6: { 
-        strip: { width: 600, height: 1800, photoWidth: 540, photoHeight: 270 },
-        grid: { width: 1200, height: 1800, photoWidth: 570, photoHeight: 570 }
-      },
-    };
+    const padding = 48; // 48px padding
+    const photoWidth = 400;
+    const photoHeight = isVertical ? 160 : 128;
+    const spacing = 12;
+    const bottomSpace = (customization?.addDate || customization?.addTime) ? 60 : 20;
 
-    const config = templateConfigs[templateNumber];
-    const layoutConfig = isVertical ? config.strip : (config.grid || config.strip);
-    
-    const padding = 30; // Reduced padding for accurate sizing
-    const spacing = templateNumber === 6 && !isVertical ? 30 : 15; // Spacing between photos
-    const bottomSpace = (customization?.addDate || customization?.addTime) ? 80 : 30;
-
-    // Set canvas to exact print dimensions
     if (isVertical) {
-      canvas.width = layoutConfig.width;
-      canvas.height = layoutConfig.height;
+      canvas.width = photoWidth + padding * 2;
+      canvas.height = (photoHeight * photos.length) + (spacing * (photos.length - 1)) + padding * 2 + bottomSpace;
     } else {
-      canvas.width = layoutConfig.width;
-      canvas.height = layoutConfig.height;
+      canvas.width = (photoWidth / 2) * 2 + spacing + padding * 2;
+      canvas.height = (photoHeight * 2) + spacing + padding * 2 + bottomSpace;
     }
 
     // Fill background with frame color or image
@@ -92,56 +68,22 @@ const DownloadPage = () => {
     try {
       const loadedPhotos = await Promise.all(photoPromises);
 
-      // Draw photos with template-specific positioning
+      // Draw photos
       loadedPhotos.forEach((img, index) => {
         let x, y, w, h;
 
         if (isVertical) {
-          // Strip layout - center photos vertically with spacing
-          const totalPhotoHeight = layoutConfig.photoHeight * photos.length;
-          const totalSpacing = spacing * (photos.length - 1);
-          const startY = (canvas.height - bottomSpace - totalPhotoHeight - totalSpacing) / 2;
-          
-          x = (canvas.width - layoutConfig.photoWidth) / 2;
-          y = startY + (layoutConfig.photoHeight + spacing) * index;
-          w = layoutConfig.photoWidth;
-          h = layoutConfig.photoHeight;
+          x = padding;
+          y = padding + (photoHeight + spacing) * index;
+          w = photoWidth;
+          h = photoHeight;
         } else {
-          // Grid layout
-          if (templateNumber === 2) {
-            // 2 photos side by side
-            const col = index % 2;
-            const totalWidth = layoutConfig.photoWidth * 2 + spacing;
-            const startX = (canvas.width - totalWidth) / 2;
-            x = startX + col * (layoutConfig.photoWidth + spacing);
-            y = (canvas.height - layoutConfig.photoHeight) / 2;
-            w = layoutConfig.photoWidth;
-            h = layoutConfig.photoHeight;
-          } else if (templateNumber === 4) {
-            // 2×2 grid
-            const col = index % 2;
-            const row = Math.floor(index / 2);
-            const totalWidth = layoutConfig.photoWidth * 2 + spacing;
-            const totalHeight = layoutConfig.photoHeight * 2 + spacing;
-            const startX = (canvas.width - totalWidth) / 2;
-            const startY = (canvas.height - bottomSpace - totalHeight) / 2;
-            x = startX + col * (layoutConfig.photoWidth + spacing);
-            y = startY + row * (layoutConfig.photoHeight + spacing);
-            w = layoutConfig.photoWidth;
-            h = layoutConfig.photoHeight;
-          } else if (templateNumber === 6) {
-            // 3×2 grid (3 columns, 2 rows)
-            const col = index % 3;
-            const row = Math.floor(index / 3);
-            const totalWidth = layoutConfig.photoWidth * 3 + spacing * 2;
-            const totalHeight = layoutConfig.photoHeight * 2 + spacing;
-            const startX = (canvas.width - totalWidth) / 2;
-            const startY = (canvas.height - bottomSpace - totalHeight) / 2;
-            x = startX + col * (layoutConfig.photoWidth + spacing);
-            y = startY + row * (layoutConfig.photoHeight + spacing);
-            w = layoutConfig.photoWidth;
-            h = layoutConfig.photoHeight;
-          }
+          const col = index % 2;
+          const row = Math.floor(index / 2);
+          x = padding + col * (photoWidth / 2 + spacing);
+          y = padding + row * (photoHeight + spacing);
+          w = photoWidth / 2;
+          h = photoHeight;
         }
 
         // Draw photo with rounded corners and preserved aspect ratio (cover behavior)

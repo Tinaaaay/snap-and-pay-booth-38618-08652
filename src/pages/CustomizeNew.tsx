@@ -42,7 +42,7 @@ import frame30 from "@/assets/frames/frame30.jpg";
 const CustomizeNew = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { photos = [], templateNumber = 1 } = location.state || {};
+  const photos = location.state?.photos || [];
   
   // Detect mobile device
   const [isMobile, setIsMobile] = useState(false);
@@ -210,7 +210,6 @@ const CustomizeNew = () => {
           textPosition,
           stickers,
           stickerPositions,
-          templateNumber,
         },
       },
     });
