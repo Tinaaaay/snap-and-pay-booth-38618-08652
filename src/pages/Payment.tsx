@@ -58,7 +58,7 @@ const Payment = () => {
               />
             </div>
             <p className="text-center font-semibold text-base sm:text-lg text-muted-foreground mt-4">
-              Please ask the attendant for the payment amount
+              Amount: ₱100
             </p>
           </div>
 
