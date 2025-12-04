@@ -5,9 +5,9 @@ import { ArrowLeft, Camera } from "lucide-react";
 
 const PhotoCount = () => {
   const navigate = useNavigate();
-  const [selectedCount, setSelectedCount] = useState(4);
+  const [selectedCount, setSelectedCount] = useState(2);
 
-  const photoOptions = [1, 2, 3, 4, 5, 6];
+  const photoOptions = [1, 2, 3];
 
   const handleContinue = () => {
     navigate("/capture", { state: { photoCount: selectedCount } });
