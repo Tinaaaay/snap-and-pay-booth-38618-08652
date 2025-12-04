@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Download, RotateCcw, Home } from "lucide-react";
+import { Download, RotateCcw, Home, Printer } from "lucide-react";
 import { toast } from "sonner";
 
 const DownloadPage = () => {
@@ -252,7 +252,52 @@ const DownloadPage = () => {
     }
   };
 
+  const handlePrint = () => {
+    if (!canvasRef.current) return;
 
+    try {
+      const dataUrl = canvasRef.current.toDataURL("image/png", 1.0);
+      const printWindow = window.open("", "_blank");
+      
+      if (printWindow) {
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>Print Photo Strip - KodaSnap</title>
+              <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body {
+                  margin: 0;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  min-height: 100vh;
+                  background: #f5f5f5;
+                }
+                img { max-width: 100%; height: auto; display: block; }
+                @media print {
+                  body { background: white; margin: 0; padding: 0; }
+                  img { max-width: 100%; height: auto; page-break-inside: avoid; }
+                  @page { margin: 0.5cm; }
+                }
+              </style>
+            </head>
+            <body>
+              <img src="${dataUrl}" onload="setTimeout(() => window.print(), 250);" alt="KodaSnap Photo Strip" />
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        toast.success("Opening print dialog...");
+      } else {
+        toast.error("Please allow pop-ups to print");
+      }
+    } catch (error) {
+      console.error("Print error:", error);
+      toast.error("Failed to print. Try downloading instead.");
+    }
+  };
 
   const handleRetake = () => {
     navigate("/capture");
@@ -317,6 +362,15 @@ const DownloadPage = () => {
             >
               <Download className="w-5 h-5" />
               Download
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={handlePrint}
+              className="w-full sm:flex-1 py-5 sm:py-6 rounded-full gap-2"
+            >
+              <Printer className="w-5 h-5" />
+              Print
             </Button>
           </div>
 
