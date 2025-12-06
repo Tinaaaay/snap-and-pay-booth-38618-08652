@@ -58,7 +58,7 @@ const Payment = () => {
               />
             </div>
             <p className="text-center font-semibold text-base sm:text-lg text-muted-foreground mt-4">
-              Amount: ₱100
+              Amount: ₱60
             </p>
           </div>
 
